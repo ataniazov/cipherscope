@@ -161,7 +161,7 @@ class AES:
 
     def __init__(self, master_key):
         output_file.write(
-            '__init__(self, master_key: {})\n'.format(master_key.hex()))
+            '__init__(master_key: {})\n'.format(master_key.hex()))
         """
         Initializes the object with a given key.
         """
@@ -191,7 +191,7 @@ class AES:
 
     def _expand_key(self, master_key):
         output_file.write(
-            '_expand_key(self, master_key: {})\n'.format(master_key.hex()))
+            '_expand_key(master_key: {})\n'.format(master_key.hex()))
         """
         Expands and returns a list of key matrices for the given master_key.
         """
@@ -346,10 +346,15 @@ class AES:
 
 
 def encrypt(plaintext, key):
+    output_file.write('encrypt({}, {})\n'.format(plaintext, key))
+    output_file.write('encrypt({}, {})\n\n'.format(plaintext.hex(), key.hex()))
     return AES(key).encrypt_block(plaintext)
 
 
 def decrypt(ciphertext, key):
+    output_file.write('decrypt({}, {})\n'.format(ciphertext, key))
+    output_file.write('decrypt({}, {})\n\n'.format(
+        ciphertext.hex(), key.hex()))
     return AES(key).decrypt_block(ciphertext)
 
 
@@ -364,12 +369,23 @@ if __name__ == '__main__':
     output_file_name = os.path.splitext(os.path.basename(__file__))[0] + '.txt'
     output_file = open(output_file_name, 'w')
 
+    text = int(sys.argv[2], 16).to_bytes(16, 'big')
+    key = int(sys.argv[3], 16).to_bytes(16, 'big')
+
     if 'encrypt'.startswith(sys.argv[1]):
-        print(encrypt(int(sys.argv[2], 16).to_bytes(16, 'big'),
-                      int(sys.argv[3], 16).to_bytes(16, 'big')).hex())
+        ciphertext = encrypt(text, key)
+        output_file.write(
+            'encrypt({}, {}):\n{}\n\n'.format(text, key, ciphertext))
+        output_file.write(
+            'encrypt({}, {}):\n{}\n'.format(text.hex(), key.hex(), ciphertext.hex()))
+        print(ciphertext.hex())
     elif 'decrypt'.startswith(sys.argv[1]):
-        print(decrypt(int(sys.argv[2], 16).to_bytes(16, 'big'),
-                      int(sys.argv[3], 16).to_bytes(16, 'big')).hex())
+        plaintext = decrypt(text, key)
+        output_file.write(
+            'decrypt({}, {}):\n{}\n\n'.format(text, key, plaintext))
+        output_file.write(
+            'decrypt({}, {}):\n{}\n'.format(text.hex(), key.hex(), plaintext.hex()))
+        print(plaintext.hex())
     output_file.close()
 
 # python3 aes.py encrypt <plaintext> <key>
