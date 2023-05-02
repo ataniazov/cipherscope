@@ -64,6 +64,7 @@ def inv_shift_rows(s):
     s[0][2], s[1][2], s[2][2], s[3][2] = s[2][2], s[3][2], s[0][2], s[1][2]
     s[0][3], s[1][3], s[2][3], s[3][3] = s[1][3], s[2][3], s[3][3], s[0][3]
 
+
 def add_round_key(s, k):
     print('add_round_key()')
     for i in range(4):
@@ -72,7 +73,7 @@ def add_round_key(s, k):
 
 
 # learned from https://web.archive.org/web/20100626212235/http://cs.ucsb.edu/~koc/cs178/projects/JT/aes.c
-xtime = lambda a: (((a << 1) ^ 0x1B) & 0xFF) if (a & 0x80) else (a << 1)
+def xtime(a): return (((a << 1) ^ 0x1B) & 0xFF) if (a & 0x80) else (a << 1)
 
 
 def mix_single_column(a):
@@ -115,53 +116,34 @@ r_con = (
 
 def bytes2matrix(text):
     """ Converts a 16-byte array into a 4x4 matrix.  """
-    print('bytes2matrix()')
     return [list(text[i:i+4]) for i in range(0, len(text), 4)]
 
+
 def matrix2bytes(matrix):
-    print('matrix2bytes()')
     """ Converts a 4x4 matrix into a 16-byte array.  """
     return bytes(sum(matrix, []))
 
+
 def xor_bytes(a, b):
     """ Returns a new byte array with the elements xor'ed. """
-    return bytes(i^j for i, j in zip(a, b))
+    return bytes(i ^ j for i, j in zip(a, b))
 
-def inc_bytes(a):
-    """ Returns a new byte array with the value increment by 1 """
-    out = list(a)
-    for i in reversed(range(len(out))):
-        if out[i] == 0xFF:
-            out[i] = 0
-        else:
-            out[i] += 1
-            break
-    return bytes(out)
 
-def pad(plaintext):
-    """
-    Pads the given plaintext with PKCS#7 padding to a multiple of 16 bytes.
-    Note that if the plaintext size is a multiple of 16,
-    a whole block will be added.
-    """
-    padding_len = 16 - (len(plaintext) % 16)
-    padding = bytes([padding_len] * padding_len)
-    return plaintext + padding
+def print_matrix_transpose(matrix, indent=5):
+    transpose = list(zip(*matrix))
 
-def unpad(plaintext):
-    """
-    Removes a PKCS#7 padding, returning the unpadded text and ensuring the
-    padding was correct.
-    """
-    padding_len = plaintext[-1]
-    assert padding_len > 0
-    message, padding = plaintext[:-padding_len], plaintext[-padding_len:]
-    assert all(p == padding_len for p in padding)
-    return message
+    rows = len(transpose)
+    cols = len(transpose[0])
 
-def split_blocks(message, block_size=16, require_padding=True):
-        assert len(message) % block_size == 0 or not require_padding
-        return [message[i:i+16] for i in range(0, len(message), block_size)]
+    vertical_bar = " " * indent + "+----" * cols + "+"
+
+    for i in range(rows):
+        print(vertical_bar)
+        print(" " * indent, end="")
+        for j in range(cols):
+            print("| {:02X} ".format(transpose[i][j]), end="")
+        print("|")
+    print(vertical_bar)
 
 
 class AES:
@@ -172,18 +154,38 @@ class AES:
     management. Unless you need that, please use `encrypt` and `decrypt`.
     """
     rounds_by_key_size = {16: 10, 24: 12, 32: 14}
+
     def __init__(self, master_key):
-        print('__init__()')
+        print('__init__(self, master_key: {})'.format(master_key.hex()))
         """
         Initializes the object with a given key.
         """
         assert len(master_key) in AES.rounds_by_key_size
         self.n_rounds = AES.rounds_by_key_size[len(master_key)]
-        print('rounds_by_key_size: '+str(self.n_rounds))
+        print('rounds_by_key_size: {}\n'.format(self.n_rounds))
         self._key_matrices = self._expand_key(master_key)
 
+        print('Key:')
+        print_matrix_transpose(self._key_matrices[0])
+        print()
+
+        for i in range(1, len(self._key_matrices)):
+            print('Key {}:'.format(i))
+            print_matrix_transpose(self._key_matrices[i])
+            print()
+
+        # print(str((matrix2bytes(self._key_matrices[0])).hex()))
+        # print(self._key_matrices[0])
+        # print()
+
+        # for i in range(1, len(self._key_matrices)):
+        #     print('')
+        #     for j in range(len(self._key_matrices[i])):
+        #         print(str(self._key_matrices[i][j].hex()), end='\n')
+        #     print()
+
     def _expand_key(self, master_key):
-        print('_expand_key()')
+        print('_expand_key(self, master_key: {})'.format(master_key.hex()))
         """
         Expands and returns a list of key matrices for the given master_key.
         """
@@ -215,42 +217,62 @@ class AES:
             key_columns.append(word)
 
         # Group key words in 4x4 byte matrices.
-        return [key_columns[4*i : 4*(i+1)] for i in range(len(key_columns) // 4)]
+        return [key_columns[4*i: 4*(i+1)] for i in range(len(key_columns) // 4)]
 
     def encrypt_block(self, plaintext):
         """
         Encrypts a single block of 16 byte long plaintext.
         """
-        print('encrypt_block()')
+        print('encrypt_block(plaintext: {})'.format(plaintext.hex()))
         assert len(plaintext) == 16
 
         plain_state = bytes2matrix(plaintext)
-        
+
+        print('plaintext:')
+        print_matrix_transpose(plain_state)
+        print()
 
         add_round_key(plain_state, self._key_matrices[0])
-        print(str((matrix2bytes(plain_state)).hex()))
+        print_matrix_transpose(self._key_matrices[0])
 
-        # print(str((matrix2bytes(self._key_matrices[0])).hex()))
-        # print(self._key_matrices[0])
-        # print()
-
-        for i in range(1, len(self._key_matrices)):
-            print('')
-            for j in range(len(self._key_matrices[i])):
-                print(str(self._key_matrices[i][j].hex()), end='\n')
-            print()
+        print('plain_state:')
+        print_matrix_transpose(plain_state)
+        print()
 
         for i in range(1, self.n_rounds):
-            print('round:'+str(i))
+            print('Round {}:'.format(i))
+
             sub_bytes(plain_state)
+            print_matrix_transpose(plain_state)
+            print()
+
             shift_rows(plain_state)
+            print_matrix_transpose(plain_state)
+            print()
+
             mix_columns(plain_state)
+            print_matrix_transpose(plain_state)
+            print()
+
             add_round_key(plain_state, self._key_matrices[i])
+            print_matrix_transpose(self._key_matrices[0])
+            print('plain_state:')
+            print_matrix_transpose(plain_state)
             print()
 
         sub_bytes(plain_state)
+        print_matrix_transpose(plain_state)
+        print()
+
         shift_rows(plain_state)
+        print_matrix_transpose(plain_state)
+        print()
+
         add_round_key(plain_state, self._key_matrices[-1])
+        print_matrix_transpose(self._key_matrices[0])
+        print('plain_state:')
+        print_matrix_transpose(plain_state)
+        print()
 
         return matrix2bytes(plain_state)
 
@@ -258,38 +280,72 @@ class AES:
         """
         Decrypts a single block of 16 byte long ciphertext.
         """
-        print('decrypt_block()')
+        print('decrypt_block(ciphertext: {})'.format(ciphertext.hex()))
         assert len(ciphertext) == 16
 
         cipher_state = bytes2matrix(ciphertext)
 
+        print('ciphertext:')
+        print_matrix_transpose(cipher_state)
+        print()
+
         add_round_key(cipher_state, self._key_matrices[-1])
+        print_matrix_transpose(self._key_matrices[-1])
+
+        print('ciphertext:')
+        print_matrix_transpose(cipher_state)
+        print()
+
         inv_shift_rows(cipher_state)
+        print_matrix_transpose(cipher_state)
+        print()
+
         inv_sub_bytes(cipher_state)
+        print_matrix_transpose(cipher_state)
+        print()
 
         for i in range(self.n_rounds - 1, 0, -1):
-            print('round:'+str(i))
+            print('Round {}:'.format(self.n_rounds-i))
+
             add_round_key(cipher_state, self._key_matrices[i])
+            print_matrix_transpose(self._key_matrices[i])
+            print('ciphertext:')
+            print_matrix_transpose(cipher_state)
+            print()
+
             inv_mix_columns(cipher_state)
+            print_matrix_transpose(cipher_state)
+            print()
+
             inv_shift_rows(cipher_state)
+            print_matrix_transpose(cipher_state)
+            print()
+
             inv_sub_bytes(cipher_state)
+            print_matrix_transpose(cipher_state)
             print()
 
         add_round_key(cipher_state, self._key_matrices[0])
+        print_matrix_transpose(self._key_matrices[0])
+
+        print('ciphertext:')
+        print_matrix_transpose(cipher_state)
+        print()
 
         return matrix2bytes(cipher_state)
 
+
 if __name__ == '__main__':
     import sys
-    write = lambda b: sys.stdout.buffer.write(b)
-    read = lambda: sys.stdin.buffer.read()
+    def write(b): return sys.stdout.buffer.write(b)
+    def read(): return sys.stdin.buffer.read()
 
     if len(sys.argv) < 2:
         print('Usage: ./aes.py encrypt "key" "message"')
         exit()
     elif len(sys.argv) == 2 and sys.argv[1] == 'benchmark':
         benchmark()
-        
+
     elif len(sys.argv) == 3:
         text = read()
     elif len(sys.argv) > 3:
