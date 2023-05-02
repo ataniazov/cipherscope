@@ -1,6 +1,7 @@
 import customtkinter
 import sys
 import os
+import subprocess
 from PIL import Image
 
 
@@ -263,7 +264,7 @@ class CipherScope(customtkinter.CTk):
 
         # create textbox
         self.aes_textbox = customtkinter.CTkTextbox(
-            self.aes_frame, state="disabled")
+            self.aes_frame, font=('DejaVu Sans Mono', 16), state="disabled")
         self.aes_textbox.grid(row=1, column=0, columnspan=5, padx=(
             20, 20), pady=(0, 0), sticky="nsew")
 
@@ -372,11 +373,19 @@ class CipherScope(customtkinter.CTk):
                     "insert", bytes.fromhex(output_entry).decode('utf-8'))
 
     def change_aes_start_button_event(self):
+        # if sys.platform.startswith("win"):
+        #     subprocess.run(['aes/aes.py', self.aes_output_entry.get(), self.aes_key_entry.get()])
+        # else:
+        #     subprocess.run(['aes/aes.py', self.aes_entrymode_button.get().lower(), self.aes_output_entry.get(), self.aes_key_entry.get()])
         self.aes_textbox.configure(state="normal")
         self.aes_textbox.delete("0.0", "end")
-        self.aes_textbox.insert("insert", "Start")
+        aes_output_file_name = 'aes/aes.txt'
+        with open(aes_output_file_name, 'r') as aes_output_file:
+            aes_output_content = aes_output_file.read()
+        aes_output_file.close()
+        self.aes_textbox.insert("insert", aes_output_content)
         self.aes_textbox.configure(state="disabled")
-        print(self.aes_textbox.get("0.0", "insert"))
+        # print(self.aes_textbox.get("0.0", "insert"))
 
 
 if __name__ == "__main__":
@@ -388,7 +397,7 @@ if __name__ == "__main__":
     # customtkinter.set_default_color_theme(os.path.join(os.path.dirname(
     #     os.path.realpath(__file__)), "assets", "themes", "kou-green.json"))
 
-    customtkinter.set_widget_scaling(int(100)/100)
+    customtkinter.set_widget_scaling(int(200)/100)
     # customtkinter.set_window_scaling(int(100)/100)
 
     app = CipherScope()
