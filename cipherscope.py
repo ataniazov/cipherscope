@@ -94,105 +94,105 @@ class CipherScope(customtkinter.CTk):
             row=5, column=0, padx=0, pady=(0, 20), sticky="s")
 
         # create buttons in scrollable frame
-        self.info_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="CipherScope",
+        self.info_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text=self.APP_NAME,
                                                    fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
                                                    image=self.info_image, anchor="w", command=self.info_button_event)
         self.info_button.grid(row=1, column=0, sticky="ew")
 
         self.aes_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="AES",
                                                   fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                  image=self.block_image, anchor="w", command=self.aes_button_event)
+                                                  image=self.block_image, anchor="w", command=self.cipher_button_event)
         self.aes_button.grid(row=2, column=0, sticky="ew")
 
-        self.block_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="Block",
-                                                    fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                    image=self.block_image, anchor="w", command=self.block_button_event)
-        self.block_button.grid(row=3, column=0, sticky="ew")
+        self.chaskey_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="Chaskey",
+                                                      fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
+                                                      image=self.block_image, anchor="w", command=self.block_button_event)
+        self.chaskey_button.grid(row=3, column=0, sticky="ew")
 
-        self.block_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="Block",
-                                                    fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                    image=self.block_image, anchor="w", command=self.block_button_event)
-        self.block_button.grid(row=4, column=0, sticky="ew")
+        self.clefia_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="CLEFIA",
+                                                     fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
+                                                     image=self.block_image, anchor="w", command=self.block_button_event)
+        self.clefia_button.grid(row=4, column=0, sticky="ew")
 
-        self.block_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="Block",
+        self.deslx_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="DESLX",
                                                     fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
                                                     image=self.block_image, anchor="w", command=self.block_button_event)
-        self.block_button.grid(row=5, column=0, sticky="ew")
+        self.deslx_button.grid(row=5, column=0, sticky="ew")
 
-        self.block_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="Block",
-                                                    fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                    image=self.block_image, anchor="w", command=self.block_button_event)
-        self.block_button.grid(row=6, column=0, sticky="ew")
+        self.fantomas_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="Fantomas",
+                                                       fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
+                                                       image=self.block_image, anchor="w", command=self.block_button_event)
+        self.fantomas_button.grid(row=6, column=0, sticky="ew")
 
-        self.block_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="Block",
-                                                    fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                    image=self.block_image, anchor="w", command=self.block_button_event)
-        self.block_button.grid(row=7, column=0, sticky="ew")
+        self.gost_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="GOST",
+                                                   fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
+                                                   image=self.block_image, anchor="w", command=self.block_button_event)
+        self.gost_button.grid(row=7, column=0, sticky="ew")
 
-        self.block_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="Block",
+        self.hight_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="HIGHT",
                                                     fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
                                                     image=self.block_image, anchor="w", command=self.block_button_event)
-        self.block_button.grid(row=8, column=0, sticky="ew")
+        self.hight_button.grid(row=8, column=0, sticky="ew")
 
-        self.block_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="Block",
-                                                    fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                    image=self.block_image, anchor="w", command=self.block_button_event)
-        self.block_button.grid(row=9, column=0, sticky="ew")
+        self.itubee_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="ITUbee",
+                                                     fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
+                                                     image=self.block_image, anchor="w", command=self.block_button_event)
+        self.itubee_button.grid(row=9, column=0, sticky="ew")
 
-        self.block_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="Block",
-                                                    fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                    image=self.block_image, anchor="w", command=self.block_button_event)
-        self.block_button.grid(row=10, column=0, sticky="ew")
+        self.kasumi_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="KASUMI",
+                                                     fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
+                                                     image=self.block_image, anchor="w", command=self.block_button_event)
+        self.kasumi_button.grid(row=10, column=0, sticky="ew")
 
-        self.block_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="Block",
+        self.klein_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="KLEIN",
                                                     fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
                                                     image=self.block_image, anchor="w", command=self.block_button_event)
-        self.block_button.grid(row=11, column=0, sticky="ew")
+        self.klein_button.grid(row=11, column=0, sticky="ew")
 
-        self.block_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="Block",
+        self.katan_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="KATAN",
                                                     fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
                                                     image=self.block_image, anchor="w", command=self.block_button_event)
-        self.block_button.grid(row=12, column=0, sticky="ew")
+        self.katan_button.grid(row=12, column=0, sticky="ew")
 
-        self.block_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="Block",
-                                                    fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                    image=self.block_image, anchor="w", command=self.block_button_event)
-        self.block_button.grid(row=13, column=0, sticky="ew")
+        self.ktantan_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="KTANTAN",
+                                                      fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
+                                                      image=self.block_image, anchor="w", command=self.block_button_event)
+        self.ktantan_button.grid(row=13, column=0, sticky="ew")
 
-        self.block_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="Block",
-                                                    fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                    image=self.block_image, anchor="w", command=self.block_button_event)
-        self.block_button.grid(row=14, column=0, sticky="ew")
+        self.lblock_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="LBlock",
+                                                     fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
+                                                     image=self.block_image, anchor="w", command=self.block_button_event)
+        self.lblock_button.grid(row=14, column=0, sticky="ew")
 
-        self.block_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="Block",
-                                                    fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                    image=self.block_image, anchor="w", command=self.block_button_event)
-        self.block_button.grid(row=15, column=0, sticky="ew")
+        self.lea_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="LEA",
+                                                  fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
+                                                  image=self.block_image, anchor="w", command=self.block_button_event)
+        self.lea_button.grid(row=15, column=0, sticky="ew")
 
-        self.block_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="Block",
-                                                    fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                    image=self.block_image, anchor="w", command=self.block_button_event)
-        self.block_button.grid(row=16, column=0, sticky="ew")
+        self.led_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="LED",
+                                                  fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
+                                                  image=self.block_image, anchor="w", command=self.block_button_event)
+        self.led_button.grid(row=16, column=0, sticky="ew")
 
-        self.block_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="Block",
-                                                    fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                    image=self.block_image, anchor="w", command=self.block_button_event)
-        self.block_button.grid(row=17, column=0, sticky="ew")
+        self.mantis_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="MANTIS",
+                                                     fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
+                                                     image=self.block_image, anchor="w", command=self.block_button_event)
+        self.mantis_button.grid(row=17, column=0, sticky="ew")
 
-        self.block_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="Block",
-                                                    fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                    image=self.block_image, anchor="w", command=self.block_button_event)
-        self.block_button.grid(row=18, column=0, sticky="ew")
+        self.mcrypton_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="mCrypton",
+                                                       fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
+                                                       image=self.block_image, anchor="w", command=self.block_button_event)
+        self.mcrypton_button.grid(row=18, column=0, sticky="ew")
 
-        self.block_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="Block",
-                                                    fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                    image=self.block_image, anchor="w", command=self.block_button_event)
-        self.block_button.grid(row=19, column=0, sticky="ew")
+        self.midori_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="Midori",
+                                                     fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
+                                                     image=self.block_image, anchor="w", command=self.block_button_event)
+        self.midori_button.grid(row=19, column=0, sticky="ew")
 
-        self.block_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="Block",
-                                                    fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                    image=self.block_image, anchor="w", command=self.block_button_event)
-        self.block_button.grid(row=20, column=0, sticky="ew")
+        self.misty1_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="MISTY1",
+                                                     fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
+                                                     image=self.block_image, anchor="w", command=self.block_button_event)
+        self.misty1_button.grid(row=20, column=0, sticky="ew")
 
         # create info frame
         # self.info_frame = customtkinter.CTkFrame(
@@ -219,53 +219,58 @@ class CipherScope(customtkinter.CTk):
         #     self.info_frame, text="CTkButton", image=self.image_icon_image, compound="bottom", anchor="w")
         # self.info_frame_button_4.grid(row=4, column=0, padx=20, pady=10)
 
-        # create AES frame
-        self.aes_frame = customtkinter.CTkFrame(
+        # create cipher frame
+        self.cipher_frame = customtkinter.CTkFrame(
             self, corner_radius=0)
-        self.aes_frame.grid_rowconfigure(1, weight=1)
-        self.aes_frame.grid_columnconfigure((1, 2), weight=1)
+        self.cipher_frame.grid_rowconfigure(1, weight=1)
+        self.cipher_frame.grid_columnconfigure((1, 2), weight=1)
 
         # create main entry and button
-        self.aes_entrymode_button = customtkinter.CTkSegmentedButton(
-            self.aes_frame, values=["Hex", "Text", "Bin"], command=self.change_aes_entrymode_button_event)
-        self.aes_entrymode_button.grid(row=0, column=0, padx=(
+        self.cipher_entrymode_button = customtkinter.CTkSegmentedButton(
+            self.cipher_frame, values=["Hex", "Text", "Bin"], command=self.change_cipher_entrymode_button_event)
+        self.cipher_entrymode_button.grid(row=0, column=0, padx=(
             20, 0), pady=(20, 20), sticky="nsew")
 
-        self.aes_input_entry = customtkinter.CTkEntry(
-            self.aes_frame, placeholder_text="Plaintext")
-        self.aes_input_entry.grid(row=0, column=1, padx=(
+        self.cipher_input_entry = customtkinter.CTkEntry(
+            self.cipher_frame, placeholder_text="Plaintext")
+        self.cipher_input_entry.grid(row=0, column=1, padx=(
             20, 0), pady=(20, 20), sticky="nsew")
 
-        self.aes_key_entry = customtkinter.CTkEntry(
-            self.aes_frame, placeholder_text="Key")
-        self.aes_key_entry.grid(row=0, column=2, padx=(
+        self.cipher_key_entry = customtkinter.CTkEntry(
+            self.cipher_frame, placeholder_text="Key")
+        self.cipher_key_entry.grid(row=0, column=2, padx=(
             20, 0), pady=(20, 20), sticky="nsew")
 
-        self.aes_optionmenu = customtkinter.CTkOptionMenu(self.aes_frame, dynamic_resizing=False,
-                                                          values=["Encrypt", "Decrypt"], command=self.change_aes_optionmenu_event)
-        self.aes_optionmenu.grid(row=0, column=3, padx=(20, 0), pady=(20, 20))
+        self.cipher_optionmenu = customtkinter.CTkOptionMenu(self.cipher_frame, dynamic_resizing=False,
+                                                             values=["Encrypt", "Decrypt"], command=self.change_cipher_optionmenu_event)
+        self.cipher_optionmenu.grid(
+            row=0, column=3, padx=(20, 0), pady=(20, 20))
 
-        self.aes_start_button = customtkinter.CTkButton(self.aes_frame, text="Start", fg_color="transparent", border_width=2, hover_color=(
-            "#3B8ED0", "#1F6AA5"), text_color=("gray10", "#DCE4EE"), command=self.change_aes_start_button_event)
-        # self.aes_start_button = customtkinter.CTkButton(
-        #     self.aes_frame, text="Start")
-        self.aes_start_button.grid(row=0, column=4, padx=(
+        self.cipher_start_button = customtkinter.CTkButton(self.cipher_frame, text="Start", fg_color="transparent", border_width=2, hover_color=(
+            "#3B8ED0", "#1F6AA5"), text_color=("gray10", "#DCE4EE"), command=self.change_cipher_start_button_event)
+        # self.cipher_start_button = customtkinter.CTkButton(
+        #     self.cipher_frame, text="Start")
+        self.cipher_start_button.grid(row=0, column=4, padx=(
             20, 20), pady=(20, 20), sticky="nsew")
 
-        self.aes_output_entrymode_button = customtkinter.CTkSegmentedButton(
-            self.aes_frame, values=["Hex", "Text", "Bin"], command=self.change_aes_output_entrymode_button_event)
-        self.aes_output_entrymode_button.grid(row=2, column=0, padx=(
+        self.cipher_output_entrymode_button = customtkinter.CTkSegmentedButton(
+            self.cipher_frame, values=["Hex", "Text", "Bin"], command=self.change_cipher_output_entrymode_button_event)
+        self.cipher_output_entrymode_button.grid(row=2, column=0, padx=(
             20, 0), pady=(20, 20), sticky="nsew")
 
-        self.aes_output_entry = customtkinter.CTkEntry(
-            self.aes_frame, placeholder_text="Ciphertext")
-        self.aes_output_entry.grid(row=2, column=1, columnspan=4, padx=(
+        self.cipher_output_entry = customtkinter.CTkEntry(
+            self.cipher_frame, placeholder_text="Ciphertext")
+        self.cipher_output_entry.grid(row=2, column=1, columnspan=4, padx=(
             20, 20), pady=(20, 20), sticky="nsew")
 
         # create textbox
-        self.aes_textbox = customtkinter.CTkTextbox(
-            self.aes_frame, font=("DejaVu Sans Mono", 16), state="disabled")
-        self.aes_textbox.grid(row=1, column=0, columnspan=5, padx=(
+        if sys.platform.startswith("win"):
+            self.cipher_textbox = customtkinter.CTkTextbox(
+                self.cipher_frame, font=("Consolas", 12), state="disabled")
+        else:
+            self.cipher_textbox = customtkinter.CTkTextbox(
+                self.cipher_frame, font=("DejaVu Sans Mono", 12), state="disabled")
+        self.cipher_textbox.grid(row=1, column=0, columnspan=5, padx=(
             20, 20), pady=(0, 0), sticky="nsew")
 
         # create block frame
@@ -279,9 +284,9 @@ class CipherScope(customtkinter.CTk):
         # set default values
         self.appearance_mode_menu.set("System")
         self.scaling_optionemenu.set("100%")
-        self.aes_entrymode_button.set("Text")
-        self.aes_optionmenu.set("Encrypt")
-        self.aes_output_entrymode_button.set("Text")
+        self.cipher_entrymode_button.set("Text")
+        self.cipher_optionmenu.set("Encrypt")
+        self.cipher_output_entrymode_button.set("Text")
 
     def on_close(self, event=0):
         self.destroy()
@@ -294,8 +299,42 @@ class CipherScope(customtkinter.CTk):
         self.info_button.configure(
             fg_color=("gray75", "gray25") if name == "info" else "transparent")
         self.aes_button.configure(
-            fg_color=("gray75", "gray25") if name == "aes" else "transparent")
-        self.block_button.configure(
+            fg_color=("gray75", "gray25") if name == "cipher" else "transparent")
+        self.chaskey_button.configure(
+            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+        self.clefia_button.configure(
+            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+        self.deslx_button.configure(
+            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+        self.fantomas_button.configure(
+            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+        self.gost_button.configure(
+            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+        self.hight_button.configure(
+            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+        self.itubee_button.configure(
+            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+        self.kasumi_button.configure(
+            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+        self.klein_button.configure(
+            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+        self.katan_button.configure(
+            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+        self.ktantan_button.configure(
+            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+        self.lblock_button.configure(
+            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+        self.lea_button.configure(
+            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+        self.led_button.configure(
+            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+        self.mantis_button.configure(
+            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+        self.mcrypton_button.configure(
+            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+        self.midori_button.configure(
+            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+        self.misty1_button.configure(
             fg_color=("gray75", "gray25") if name == "block" else "transparent")
 
         # show selected frame
@@ -303,10 +342,10 @@ class CipherScope(customtkinter.CTk):
             self.info_frame.grid(row=0, column=1, sticky="nsew")
         else:
             self.info_frame.grid_forget()
-        if name == "aes":
-            self.aes_frame.grid(row=0, column=1, sticky="nsew")
+        if name == "cipher":
+            self.cipher_frame.grid(row=0, column=1, sticky="nsew")
         else:
-            self.aes_frame.grid_forget()
+            self.cipher_frame.grid_forget()
         if name == "block":
             self.block_frame.grid(row=0, column=1, sticky="nsew")
         else:
@@ -315,8 +354,8 @@ class CipherScope(customtkinter.CTk):
     def info_button_event(self):
         self.select_frame_by_name("info")
 
-    def aes_button_event(self):
-        self.select_frame_by_name("aes")
+    def cipher_button_event(self):
+        self.select_frame_by_name("cipher")
 
     def block_button_event(self):
         self.select_frame_by_name("block")
@@ -330,73 +369,77 @@ class CipherScope(customtkinter.CTk):
         customtkinter.set_widget_scaling(new_scaling_float)
         # customtkinter.set_window_scaling(new_scaling_float)
 
-    # AES
-    def change_aes_optionmenu_event(self, new_optionmenu: str):
+    # cipher
+    def change_cipher_optionmenu_event(self, new_optionmenu: str):
         if "Decrypt" == new_optionmenu:
-            self.aes_input_entry.configure(placeholder_text="Ciphertext")
-            self.aes_output_entry.configure(placeholder_text="Plaintext")
+            self.cipher_input_entry.configure(placeholder_text="Ciphertext")
+            self.cipher_output_entry.configure(placeholder_text="Plaintext")
         else:
-            self.aes_input_entry.configure(placeholder_text="Plaintext")
-            self.aes_output_entry.configure(placeholder_text="Ciphertext")
+            self.cipher_input_entry.configure(placeholder_text="Plaintext")
+            self.cipher_output_entry.configure(placeholder_text="Ciphertext")
 
-    def change_aes_entrymode_button_event(self, new_entrymode: str):
-        input_entry = self.aes_input_entry.get()
-        key_entry = self.aes_key_entry.get()
+    def change_cipher_entrymode_button_event(self, new_entrymode: str):
+        input_entry = self.cipher_input_entry.get()
+        key_entry = self.cipher_key_entry.get()
         if "Hex" == new_entrymode:
             if input_entry:
-                self.aes_input_entry.delete("0", "end")
-                self.aes_input_entry.insert(
+                self.cipher_input_entry.delete("0", "end")
+                self.cipher_input_entry.insert(
                     "insert", input_entry.encode("utf-8").hex())
             if key_entry:
-                self.aes_key_entry.delete("0", "end")
-                self.aes_key_entry.insert(
+                self.cipher_key_entry.delete("0", "end")
+                self.cipher_key_entry.insert(
                     "insert", key_entry.encode("utf-8").hex())
         else:
             if input_entry:
-                self.aes_input_entry.delete("0", "end")
-                self.aes_input_entry.insert(
+                self.cipher_input_entry.delete("0", "end")
+                self.cipher_input_entry.insert(
                     "insert", bytes.fromhex(input_entry).decode("utf-8"))
             if key_entry:
-                self.aes_key_entry.delete("0", "end")
-                self.aes_key_entry.insert(
+                self.cipher_key_entry.delete("0", "end")
+                self.cipher_key_entry.insert(
                     "insert", bytes.fromhex(key_entry).decode("utf-8"))
 
-    def change_aes_output_entrymode_button_event(self, new_entrymode: str):
-        output_entry = self.aes_output_entry.get()
+    def change_cipher_output_entrymode_button_event(self, new_entrymode: str):
+        output_entry = self.cipher_output_entry.get()
         if output_entry:
-            self.aes_output_entry.delete("0", "end")
+            self.cipher_output_entry.delete("0", "end")
             if "Hex" == new_entrymode:
-                self.aes_output_entry.insert(
+                self.cipher_output_entry.insert(
                     "insert", output_entry.encode("utf-8").hex())
             else:
-                self.aes_output_entry.insert(
+                self.cipher_output_entry.insert(
                     "insert", bytes.fromhex(output_entry).decode("utf-8"))
 
-    def change_aes_start_button_event(self):
-        # if sys.platform.startswith("win"):
-        #     subprocess.run(["aes/aes.py", self.aes_output_entry.get(), self.aes_key_entry.get()])
-        # else:
-        if "Hex" != self.aes_entrymode_button.get():
-            self.aes_entrymode_button.set("Hex")
-            self.change_aes_entrymode_button_event("Hex")
+    def change_cipher_start_button_event(self):
+        if "Hex" != self.cipher_entrymode_button.get():
+            self.cipher_entrymode_button.set("Hex")
+            self.change_cipher_entrymode_button_event("Hex")
 
-        aes_output = subprocess.check_output(["aes/aes.py", self.aes_optionmenu.get().lower(), self.aes_input_entry.get(),
-                                              self.aes_key_entry.get()])
+        exec_folder = "aes"
+        exec_file = "aes.py"
+        exec_output_file_name = exec_file.split(".")[0] + ".txt"
 
-        aes_output_file_name = "aes.txt"
-        with open(aes_output_file_name, "r") as aes_output_file:
-            aes_output_content = aes_output_file.read()
-        aes_output_file.close()
+        if sys.platform.startswith("win"):
+            exec_stdout = subprocess.check_output(["python", exec_folder + "\\" + exec_file, self.cipher_optionmenu.get().lower(), self.cipher_input_entry.get(),
+                                                   self.cipher_key_entry.get()])
+        else:
+            exec_stdout = subprocess.check_output([exec_folder + "/" + exec_file, self.cipher_optionmenu.get().lower(), self.cipher_input_entry.get(),
+                                                   self.cipher_key_entry.get()])
 
-        self.aes_textbox.configure(state="normal")
-        self.aes_textbox.delete("0.0", "end")
-        self.aes_textbox.insert("insert", aes_output_content)
-        self.aes_textbox.configure(state="disabled")
+        with open(exec_output_file_name, "r") as exec_output_file:
+            exec_output_content = exec_output_file.read()
+        exec_output_file.close()
 
-        self.aes_output_entry.delete("0", "end")
-        self.aes_output_entrymode_button.set("Hex")
-        self.aes_output_entry.insert("insert", aes_output)
-        # print(self.aes_textbox.get("0.0", "insert"))
+        self.cipher_textbox.configure(state="normal")
+        self.cipher_textbox.delete("0.0", "end")
+        self.cipher_textbox.insert("insert", exec_output_content)
+        self.cipher_textbox.configure(state="disabled")
+
+        self.cipher_output_entry.delete("0", "end")
+        self.cipher_output_entrymode_button.set("Hex")
+        self.cipher_output_entry.insert("insert", exec_stdout)
+        # print(self.cipher_textbox.get("0.0", "insert"))
 
 
 if __name__ == "__main__":
