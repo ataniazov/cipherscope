@@ -369,8 +369,8 @@ if __name__ == '__main__':
     output_file_name = os.path.splitext(os.path.basename(__file__))[0] + '.txt'
     output_file = open(output_file_name, 'w')
 
-    text = int(sys.argv[2], 16).to_bytes(16, 'big')
-    key = int(sys.argv[3], 16).to_bytes(16, 'big')
+    text = int(sys.argv[2].strip(), 16).to_bytes(16, 'big')
+    key = int(sys.argv[3].strip(), 16).to_bytes(16, 'big')
 
     if 'encrypt'.startswith(sys.argv[1]):
         ciphertext = encrypt(text, key)
@@ -378,14 +378,14 @@ if __name__ == '__main__':
             'encrypt({}, {}):\n{}\n\n'.format(text, key, ciphertext))
         output_file.write(
             'encrypt({}, {}):\n{}\n'.format(text.hex(), key.hex(), ciphertext.hex()))
-        print(ciphertext.hex())
+        print(ciphertext.hex(), end='')
     elif 'decrypt'.startswith(sys.argv[1]):
         plaintext = decrypt(text, key)
         output_file.write(
             'decrypt({}, {}):\n{}\n\n'.format(text, key, plaintext))
         output_file.write(
             'decrypt({}, {}):\n{}\n'.format(text.hex(), key.hex(), plaintext.hex()))
-        print(plaintext.hex())
+        print(plaintext.hex(), end='')
     output_file.close()
 
 # python3 aes.py encrypt <plaintext> <key>
