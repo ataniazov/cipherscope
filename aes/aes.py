@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-output_file = ''
+output_file = ""
 
 s_box = (
     0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
@@ -42,35 +42,35 @@ inv_s_box = (
 
 
 def sub_bytes(s):
-    output_file.write('sub_bytes()\n')
+    output_file.write("sub_bytes()\n")
     for i in range(4):
         for j in range(4):
             s[i][j] = s_box[s[i][j]]
 
 
 def inv_sub_bytes(s):
-    output_file.write('inv_sub_bytes()\n')
+    output_file.write("inv_sub_bytes()\n")
     for i in range(4):
         for j in range(4):
             s[i][j] = inv_s_box[s[i][j]]
 
 
 def shift_rows(s):
-    output_file.write('shift_rows()\n')
+    output_file.write("shift_rows()\n")
     s[0][1], s[1][1], s[2][1], s[3][1] = s[1][1], s[2][1], s[3][1], s[0][1]
     s[0][2], s[1][2], s[2][2], s[3][2] = s[2][2], s[3][2], s[0][2], s[1][2]
     s[0][3], s[1][3], s[2][3], s[3][3] = s[3][3], s[0][3], s[1][3], s[2][3]
 
 
 def inv_shift_rows(s):
-    output_file.write('inv_shift_rows()\n')
+    output_file.write("inv_shift_rows()\n")
     s[0][1], s[1][1], s[2][1], s[3][1] = s[3][1], s[0][1], s[1][1], s[2][1]
     s[0][2], s[1][2], s[2][2], s[3][2] = s[2][2], s[3][2], s[0][2], s[1][2]
     s[0][3], s[1][3], s[2][3], s[3][3] = s[1][3], s[2][3], s[3][3], s[0][3]
 
 
 def add_round_key(s, k):
-    output_file.write('add_round_key()\n')
+    output_file.write("add_round_key()\n")
     for i in range(4):
         for j in range(4):
             s[i][j] ^= k[i][j]
@@ -91,13 +91,13 @@ def mix_single_column(a):
 
 
 def mix_columns(s):
-    output_file.write('mix_columns()\n')
+    output_file.write("mix_columns()\n")
     for i in range(4):
         mix_single_column(s[i])
 
 
 def inv_mix_columns(s):
-    output_file.write('inv_mix_columns()\n')
+    output_file.write("inv_mix_columns()\n")
     # see Sec 4.1.3 in The Design of Rijndael
     for i in range(4):
         u = xtime(xtime(s[i][0] ^ s[i][2]))
@@ -139,14 +139,14 @@ def print_matrix_transpose(matrix, indent=8):
     rows = len(transpose)
     cols = len(transpose[0])
 
-    vertical_bar = ' ' * indent + '+----' * cols + '+\n'
+    vertical_bar = " " * indent + "+----" * cols + "+\n"
 
     for i in range(rows):
         output_file.write(vertical_bar)
-        output_file.write(' ' * indent)
+        output_file.write(" " * indent)
         for j in range(cols):
-            output_file.write('| {:02X} '.format(transpose[i][j]))
-        output_file.write('|\n')
+            output_file.write("| {:02X} ".format(transpose[i][j]))
+        output_file.write("|\n")
     output_file.write(vertical_bar)
 
 
@@ -161,37 +161,37 @@ class AES:
 
     def __init__(self, master_key):
         output_file.write(
-            '__init__(master_key: {})\n'.format(master_key.hex()))
+            "__init__(master_key: {})\n".format(master_key.hex()))
         """
         Initializes the object with a given key.
         """
         assert len(master_key) in AES.rounds_by_key_size
         self.n_rounds = AES.rounds_by_key_size[len(master_key)]
-        output_file.write('rounds_by_key_size: {}\n\n'.format(self.n_rounds))
+        output_file.write("rounds_by_key_size: {}\n\n".format(self.n_rounds))
         self._key_matrices = self._expand_key(master_key)
 
-        output_file.write('Key:\n')
+        output_file.write("Key:\n")
         print_matrix_transpose(self._key_matrices[0])
-        output_file.write('\n')
+        output_file.write("\n")
 
         for i in range(1, len(self._key_matrices)):
-            output_file.write('Key {}:\n'.format(i))
+            output_file.write("Key {}:\n".format(i))
             print_matrix_transpose(self._key_matrices[i])
-            output_file.write('\n')
+            output_file.write("\n")
 
         # print(str((matrix2bytes(self._key_matrices[0])).hex()))
         # print(self._key_matrices[0])
-        # output_file.write('\n')
+        # output_file.write("\n")
 
         # for i in range(1, len(self._key_matrices)):
-        #     print('')
+        #     output_file.write("\n")
         #     for j in range(len(self._key_matrices[i])):
-        #         print(str(self._key_matrices[i][j].hex()), end='\n')
-        #     output_file.write('\n')
+        #         print(str(self._key_matrices[i][j].hex()), end="\n")
+        #     output_file.write("\n")
 
     def _expand_key(self, master_key):
         output_file.write(
-            '_expand_key(master_key: {})\n'.format(master_key.hex()))
+            "_expand_key(master_key: {})\n".format(master_key.hex()))
         """
         Expands and returns a list of key matrices for the given master_key.
         """
@@ -230,57 +230,57 @@ class AES:
         Encrypts a single block of 16 byte long plaintext.
         """
         output_file.write(
-            'encrypt_block(plaintext: {})\n'.format(plaintext.hex()))
+            "encrypt_block(plaintext: {})\n".format(plaintext.hex()))
         assert len(plaintext) == 16
 
         plain_state = bytes2matrix(plaintext)
 
-        output_file.write('plaintext:\n')
+        output_file.write("plaintext:\n")
         print_matrix_transpose(plain_state)
-        output_file.write('\n')
+        output_file.write("\n")
 
         add_round_key(plain_state, self._key_matrices[0])
         print_matrix_transpose(self._key_matrices[0])
 
-        output_file.write('plain_state:\n')
+        output_file.write("plain_state:\n")
         print_matrix_transpose(plain_state)
-        output_file.write('\n')
+        output_file.write("\n")
 
         for i in range(1, self.n_rounds):
             output_file.write(
-                '+----------+\n| Round {:2} |\n+----------+\n'.format(i))
+                "+----------+\n| Round {:2} |\n+----------+\n".format(i))
 
             sub_bytes(plain_state)
             print_matrix_transpose(plain_state)
-            output_file.write('\n')
+            output_file.write("\n")
 
             shift_rows(plain_state)
             print_matrix_transpose(plain_state)
-            output_file.write('\n')
+            output_file.write("\n")
 
             mix_columns(plain_state)
             print_matrix_transpose(plain_state)
-            output_file.write('\n')
+            output_file.write("\n")
 
             add_round_key(plain_state, self._key_matrices[i])
             print_matrix_transpose(self._key_matrices[i])
-            output_file.write('plain_state:\n')
+            output_file.write("plain_state:\n")
             print_matrix_transpose(plain_state)
-            output_file.write('\n')
+            output_file.write("\n")
 
         sub_bytes(plain_state)
         print_matrix_transpose(plain_state)
-        output_file.write('\n')
+        output_file.write("\n")
 
         shift_rows(plain_state)
         print_matrix_transpose(plain_state)
-        output_file.write('\n')
+        output_file.write("\n")
 
         add_round_key(plain_state, self._key_matrices[-1])
         print_matrix_transpose(self._key_matrices[0])
-        output_file.write('plain_state:\n')
+        output_file.write("plain_state:\n")
         print_matrix_transpose(plain_state)
-        output_file.write('\n')
+        output_file.write("\n")
 
         return matrix2bytes(plain_state)
 
@@ -289,76 +289,76 @@ class AES:
         Decrypts a single block of 16 byte long ciphertext.
         """
         output_file.write(
-            'decrypt_block(ciphertext: {})\n'.format(ciphertext.hex()))
+            "decrypt_block(ciphertext: {})\n".format(ciphertext.hex()))
         assert len(ciphertext) == 16
 
         cipher_state = bytes2matrix(ciphertext)
 
-        output_file.write('ciphertext:\n')
+        output_file.write("ciphertext:\n")
         print_matrix_transpose(cipher_state)
-        output_file.write('\n')
+        output_file.write("\n")
 
         add_round_key(cipher_state, self._key_matrices[-1])
         print_matrix_transpose(self._key_matrices[-1])
 
-        output_file.write('cipher_state:\n')
+        output_file.write("cipher_state:\n")
         print_matrix_transpose(cipher_state)
-        output_file.write('\n')
+        output_file.write("\n")
 
         inv_shift_rows(cipher_state)
         print_matrix_transpose(cipher_state)
-        output_file.write('\n')
+        output_file.write("\n")
 
         inv_sub_bytes(cipher_state)
         print_matrix_transpose(cipher_state)
-        output_file.write('\n')
+        output_file.write("\n")
 
         for i in range(self.n_rounds - 1, 0, -1):
             output_file.write(
-                '+----------+\n| Round {:2} |\n+----------+\n'.format(self.n_rounds-i))
+                "+----------+\n| Round {:2} |\n+----------+\n".format(self.n_rounds-i))
 
             add_round_key(cipher_state, self._key_matrices[i])
             print_matrix_transpose(self._key_matrices[i])
-            output_file.write('cipher_state:\n')
+            output_file.write("cipher_state:\n")
             print_matrix_transpose(cipher_state)
-            output_file.write('\n')
+            output_file.write("\n")
 
             inv_mix_columns(cipher_state)
             print_matrix_transpose(cipher_state)
-            output_file.write('\n')
+            output_file.write("\n")
 
             inv_shift_rows(cipher_state)
             print_matrix_transpose(cipher_state)
-            output_file.write('\n')
+            output_file.write("\n")
 
             inv_sub_bytes(cipher_state)
             print_matrix_transpose(cipher_state)
-            output_file.write('\n')
+            output_file.write("\n")
 
         add_round_key(cipher_state, self._key_matrices[0])
         print_matrix_transpose(self._key_matrices[0])
 
-        output_file.write('cipher_state:\n')
+        output_file.write("cipher_state:\n")
         print_matrix_transpose(cipher_state)
-        output_file.write('\n')
+        output_file.write("\n")
 
         return matrix2bytes(cipher_state)
 
 
 def encrypt(plaintext, key):
-    output_file.write('encrypt({}, {})\n'.format(plaintext, key))
-    output_file.write('encrypt({}, {})\n\n'.format(plaintext.hex(), key.hex()))
+    output_file.write("encrypt({}, {})\n".format(plaintext, key))
+    output_file.write("encrypt({}, {})\n\n".format(plaintext.hex(), key.hex()))
     return AES(key).encrypt_block(plaintext)
 
 
 def decrypt(ciphertext, key):
-    output_file.write('decrypt({}, {})\n'.format(ciphertext, key))
-    output_file.write('decrypt({}, {})\n\n'.format(
+    output_file.write("decrypt({}, {})\n".format(ciphertext, key))
+    output_file.write("decrypt({}, {})\n\n".format(
         ciphertext.hex(), key.hex()))
     return AES(key).decrypt_block(ciphertext)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
     import os
 
@@ -366,32 +366,32 @@ if __name__ == '__main__':
         # output_file.close()
         exit()
 
-    output_file_name = os.path.splitext(os.path.basename(__file__))[0] + '.txt'
-    output_file = open(output_file_name, 'w')
+    text = int(sys.argv[2].strip(), 16).to_bytes(16, "big")
+    key = int(sys.argv[3].strip(), 16).to_bytes(16, "big")
 
-    text = int(sys.argv[2].strip(), 16).to_bytes(16, 'big')
-    key = int(sys.argv[3].strip(), 16).to_bytes(16, 'big')
+    output_file_name = os.path.splitext(os.path.basename(__file__))[0] + ".txt"
+    output_file = open(output_file_name, "w")
 
-    if 'encrypt'.startswith(sys.argv[1]):
+    if "encrypt".startswith(sys.argv[1]):
         ciphertext = encrypt(text, key)
         output_file.write(
-            'encrypt({}, {}):\n{}\n\n'.format(text, key, ciphertext))
+            "encrypt({}, {}):\n{}\n\n".format(text, key, ciphertext))
         output_file.write(
-            'encrypt({}, {}):\n{}\n'.format(text.hex(), key.hex(), ciphertext.hex()))
-        print(ciphertext.hex(), end='')
-    elif 'decrypt'.startswith(sys.argv[1]):
+            "encrypt({}, {}):\n{}\n".format(text.hex(), key.hex(), ciphertext.hex()))
+        print(ciphertext.hex(), end="")
+    elif "decrypt".startswith(sys.argv[1]):
         plaintext = decrypt(text, key)
         output_file.write(
-            'decrypt({}, {}):\n{}\n\n'.format(text, key, plaintext))
+            "decrypt({}, {}):\n{}\n\n".format(text, key, plaintext))
         output_file.write(
-            'decrypt({}, {}):\n{}\n'.format(text.hex(), key.hex(), plaintext.hex()))
-        print(plaintext.hex(), end='')
+            "decrypt({}, {}):\n{}\n".format(text.hex(), key.hex(), plaintext.hex()))
+        print(plaintext.hex(), end="")
     output_file.close()
 
 # python3 aes.py encrypt <plaintext> <key>
 # python3 aes.py encrypt 41545441434b204154204441574e2101 534f4d452031323820424954204b4559
-#                              'ATTACK AT DAWN!\x01'             'SOME 128 BIT KEY'
+#                              "ATTACK AT DAWN!\x01"             "SOME 128 BIT KEY"
 
 # python3 aes.py decrypt <ciphertext> <key>
 # python3 aes.py decrypt 7d354e8b1dc429a300abac87c050951a 534f4d452031323820424954204b4559
-#                                  <ciphertext>                  'SOME 128 BIT KEY'
+#                                  <ciphertext>                  "SOME 128 BIT KEY"

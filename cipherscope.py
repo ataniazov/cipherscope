@@ -28,7 +28,7 @@ class CipherScope(customtkinter.CTk):
         self.protocol("WM_DELETE_WINDOW", self.on_close)
         self.bind("<Control-q>", self.on_close)
         self.bind("<Control-w>", self.on_close)
-        # self.createcommand('tk::mac::Quit', self.on_close)
+        # self.createcommand("tk::mac::Quit", self.on_close)
 
         # set grid layout 1x2
         self.grid_rowconfigure(0, weight=1)
@@ -63,7 +63,7 @@ class CipherScope(customtkinter.CTk):
         self.navigation_frame.grid(row=0, column=0, sticky="nsew")
         self.navigation_frame.grid_rowconfigure(1, weight=1)
 
-        self.navigation_frame_label = customtkinter.CTkLabel(self.navigation_frame, text="  CipherScope", image=self.logo_image,
+        self.navigation_frame_label = customtkinter.CTkLabel(self.navigation_frame, text="  " + self.APP_NAME, image=self.logo_image,
                                                              compound="left", font=customtkinter.CTkFont(size=18, weight="bold"))
         self.navigation_frame_label.grid(row=0, column=0, padx=0, pady=20)
 
@@ -227,7 +227,7 @@ class CipherScope(customtkinter.CTk):
 
         # create main entry and button
         self.aes_entrymode_button = customtkinter.CTkSegmentedButton(
-            self.aes_frame, values=["Text", "Hex"], command=self.change_aes_entrymode_button_event)
+            self.aes_frame, values=["Hex", "Text", "Bin"], command=self.change_aes_entrymode_button_event)
         self.aes_entrymode_button.grid(row=0, column=0, padx=(
             20, 0), pady=(20, 20), sticky="nsew")
 
@@ -253,7 +253,7 @@ class CipherScope(customtkinter.CTk):
             20, 20), pady=(20, 20), sticky="nsew")
 
         self.aes_output_entrymode_button = customtkinter.CTkSegmentedButton(
-            self.aes_frame, values=["Text", "Hex"], command=self.change_aes_output_entrymode_button_event)
+            self.aes_frame, values=["Hex", "Text", "Bin"], command=self.change_aes_output_entrymode_button_event)
         self.aes_output_entrymode_button.grid(row=2, column=0, padx=(
             20, 0), pady=(20, 20), sticky="nsew")
 
@@ -264,7 +264,7 @@ class CipherScope(customtkinter.CTk):
 
         # create textbox
         self.aes_textbox = customtkinter.CTkTextbox(
-            self.aes_frame, font=('DejaVu Sans Mono', 16), state="disabled")
+            self.aes_frame, font=("DejaVu Sans Mono", 16), state="disabled")
         self.aes_textbox.grid(row=1, column=0, columnspan=5, padx=(
             20, 20), pady=(0, 0), sticky="nsew")
 
@@ -332,70 +332,70 @@ class CipherScope(customtkinter.CTk):
 
     # AES
     def change_aes_optionmenu_event(self, new_optionmenu: str):
-        if 'Decrypt' == new_optionmenu:
-            self.aes_input_entry.configure(placeholder_text='Ciphertext')
-            self.aes_output_entry.configure(placeholder_text='Plaintext')
+        if "Decrypt" == new_optionmenu:
+            self.aes_input_entry.configure(placeholder_text="Ciphertext")
+            self.aes_output_entry.configure(placeholder_text="Plaintext")
         else:
-            self.aes_input_entry.configure(placeholder_text='Plaintext')
-            self.aes_output_entry.configure(placeholder_text='Ciphertext')
+            self.aes_input_entry.configure(placeholder_text="Plaintext")
+            self.aes_output_entry.configure(placeholder_text="Ciphertext")
 
     def change_aes_entrymode_button_event(self, new_entrymode: str):
         input_entry = self.aes_input_entry.get()
         key_entry = self.aes_key_entry.get()
-        if 'Hex' == new_entrymode:
+        if "Hex" == new_entrymode:
             if input_entry:
-                self.aes_input_entry.delete('0', 'end')
+                self.aes_input_entry.delete("0", "end")
                 self.aes_input_entry.insert(
-                    'insert', input_entry.encode('utf-8').hex())
+                    "insert", input_entry.encode("utf-8").hex())
             if key_entry:
-                self.aes_key_entry.delete('0', 'end')
+                self.aes_key_entry.delete("0", "end")
                 self.aes_key_entry.insert(
-                    'insert', key_entry.encode('utf-8').hex())
+                    "insert", key_entry.encode("utf-8").hex())
         else:
             if input_entry:
-                self.aes_input_entry.delete('0', 'end')
+                self.aes_input_entry.delete("0", "end")
                 self.aes_input_entry.insert(
-                    'insert', bytes.fromhex(input_entry).decode('utf-8'))
+                    "insert", bytes.fromhex(input_entry).decode("utf-8"))
             if key_entry:
-                self.aes_key_entry.delete('0', 'end')
+                self.aes_key_entry.delete("0", "end")
                 self.aes_key_entry.insert(
-                    'insert', bytes.fromhex(key_entry).decode('utf-8'))
+                    "insert", bytes.fromhex(key_entry).decode("utf-8"))
 
     def change_aes_output_entrymode_button_event(self, new_entrymode: str):
         output_entry = self.aes_output_entry.get()
         if output_entry:
-            self.aes_output_entry.delete('0', 'end')
-            if 'Hex' == new_entrymode:
+            self.aes_output_entry.delete("0", "end")
+            if "Hex" == new_entrymode:
                 self.aes_output_entry.insert(
-                    'insert', output_entry.encode('utf-8').hex())
+                    "insert", output_entry.encode("utf-8").hex())
             else:
                 self.aes_output_entry.insert(
-                    'insert', bytes.fromhex(output_entry).decode('utf-8'))
+                    "insert", bytes.fromhex(output_entry).decode("utf-8"))
 
     def change_aes_start_button_event(self):
         # if sys.platform.startswith("win"):
-        #     subprocess.run(['aes/aes.py', self.aes_output_entry.get(), self.aes_key_entry.get()])
+        #     subprocess.run(["aes/aes.py", self.aes_output_entry.get(), self.aes_key_entry.get()])
         # else:
-        if 'Hex' != self.aes_entrymode_button.get():
-            self.aes_entrymode_button.set('Hex')
-            self.change_aes_entrymode_button_event('Hex')
+        if "Hex" != self.aes_entrymode_button.get():
+            self.aes_entrymode_button.set("Hex")
+            self.change_aes_entrymode_button_event("Hex")
 
-        aes_output = subprocess.check_output(['aes/aes.py', self.aes_optionmenu.get().lower(), self.aes_input_entry.get(),
+        aes_output = subprocess.check_output(["aes/aes.py", self.aes_optionmenu.get().lower(), self.aes_input_entry.get(),
                                               self.aes_key_entry.get()])
 
-        aes_output_file_name = 'aes.txt'
-        with open(aes_output_file_name, 'r') as aes_output_file:
+        aes_output_file_name = "aes.txt"
+        with open(aes_output_file_name, "r") as aes_output_file:
             aes_output_content = aes_output_file.read()
         aes_output_file.close()
 
-        self.aes_textbox.configure(state='normal')
-        self.aes_textbox.delete('0.0', 'end')
-        self.aes_textbox.insert('insert', aes_output_content)
+        self.aes_textbox.configure(state="normal")
+        self.aes_textbox.delete("0.0", "end")
+        self.aes_textbox.insert("insert", aes_output_content)
         self.aes_textbox.configure(state="disabled")
 
-        self.aes_output_entry.delete('0', 'end')
+        self.aes_output_entry.delete("0", "end")
         self.aes_output_entrymode_button.set("Hex")
-        self.aes_output_entry.insert('insert', aes_output)
+        self.aes_output_entry.insert("insert", aes_output)
         # print(self.aes_textbox.get("0.0", "insert"))
 
 
