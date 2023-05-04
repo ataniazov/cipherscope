@@ -246,13 +246,12 @@ class CipherScope(customtkinter.CTk):
 
         self.cipher_key_entry = customtkinter.CTkEntry(
             self.cipher_frame, placeholder_text="Key")
-        self.cipher_key_entry.grid(row=1, column=1, padx=(
+        self.cipher_key_entry.grid(row=1, column=1, columnspan=2, padx=(
             20, 0), pady=(10, 20), sticky="nsew")
 
         self.cipher_iv_entry = customtkinter.CTkEntry(
             self.cipher_frame, placeholder_text="Initialization Vector")
-        self.cipher_iv_entry.grid(row=1, column=2, padx=(
-            20, 0), pady=(10, 20), sticky="nsew")
+        # self.cipher_iv_entry.grid(row=1, column=2, padx=(20, 0), pady=(10, 20), sticky="nsew")
 
         self.cipher_start_button = customtkinter.CTkButton(self.cipher_frame, text="Start", fg_color="transparent", border_width=2, hover_color=(
             "#3B8ED0", "#1F6AA5"), text_color=("gray10", "#DCE4EE"), command=self.change_cipher_start_button_event)
@@ -295,8 +294,8 @@ class CipherScope(customtkinter.CTk):
         self.cipher_input_entrymode_button.set("Text")
         self.cipher_transform_optionmenu.set("Encrypt")
         self.cipher_mode_optionmenu.set("None")
-        self.cipher_iv_entry.configure(placeholder_text="Disabled")
-        self.cipher_iv_entry.configure(state="disabled")
+        # self.cipher_iv_entry.configure(placeholder_text="Disabled")
+        # self.cipher_iv_entry.configure(state="disabled")
         self.cipher_output_entrymode_button.set("Text")
 
     def on_close(self, event=0):
@@ -413,13 +412,19 @@ class CipherScope(customtkinter.CTk):
 
     def change_cipher_mode_optionmenu_event(self, new_mode_optionmenu: str):
         if "None" == new_mode_optionmenu:
-            self.cipher_iv_entry.delete("0", "end")
-            self.cipher_iv_entry.configure(placeholder_text="Disabled")
-            self.cipher_iv_entry.configure(state="disabled")
+            # self.cipher_iv_entry.delete("0", "end")
+            # self.cipher_iv_entry.configure(placeholder_text="Disabled")
+            # self.cipher_iv_entry.configure(state="disabled")
+            self.cipher_iv_entry.grid_forget()
+            # self.cipher_key_entry.grid_forget()
+            self.cipher_key_entry.grid(columnspan=2)
         else:
-            self.cipher_iv_entry.configure(state="normal")
-            self.cipher_iv_entry.configure(
-                placeholder_text="Initialization Vector")
+            # self.cipher_iv_entry.configure(state="normal")
+            # self.cipher_iv_entry.configure(placeholder_text="Initialization Vector")
+            # self.cipher_key_entry.grid_forget()
+            self.cipher_key_entry.grid(columnspan=1)
+            self.cipher_iv_entry.grid(row=1, column=2, padx=(
+                20, 0), pady=(10, 20), sticky="nsew")
 
     def change_cipher_output_entrymode_button_event(self, new_entrymode: str):
         output_entry = self.cipher_output_entry.get()
