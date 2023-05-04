@@ -133,6 +133,23 @@ def xor_bytes(a, b):
     return bytes(i ^ j for i, j in zip(a, b))
 
 
+def inc_bytes(a):
+    """ Returns a new byte array with the value increment by 1 """
+    out = list(a)
+    for i in reversed(range(len(out))):
+        if out[i] == 0xFF:
+            out[i] = 0
+        else:
+            out[i] += 1
+            break
+    return bytes(out)
+
+
+def split_blocks(message, block_size=16, require_padding=True):
+    assert len(message) % block_size == 0 or not require_padding
+    return [message[i:i+16] for i in range(0, len(message), block_size)]
+
+
 def print_matrix_transpose(matrix, indent=8):
     transpose = list(zip(*matrix))
 
@@ -343,6 +360,38 @@ class AES:
         output_file.write("\n")
 
         return matrix2bytes(cipher_state)
+
+    def encrypt_ctr(self, plaintext, iv):
+        """
+        Encrypts `plaintext` using CTR mode with the given nounce/IV.
+        """
+        assert len(iv) == 16
+
+        blocks = []
+        nonce = iv
+        for plaintext_block in split_blocks(plaintext, require_padding=False):
+            # CTR mode encrypt: plaintext_block XOR encrypt(nonce)
+            block = xor_bytes(plaintext_block, self.encrypt_block(nonce))
+            blocks.append(block)
+            nonce = inc_bytes(nonce)
+
+        return b''.join(blocks)
+
+    def decrypt_ctr(self, ciphertext, iv):
+        """
+        Decrypts `ciphertext` using CTR mode with the given nounce/IV.
+        """
+        assert len(iv) == 16
+
+        blocks = []
+        nonce = iv
+        for ciphertext_block in split_blocks(ciphertext, require_padding=False):
+            # CTR mode decrypt: ciphertext XOR encrypt(nonce)
+            block = xor_bytes(ciphertext_block, self.encrypt_block(nonce))
+            blocks.append(block)
+            nonce = inc_bytes(nonce)
+
+        return b''.join(blocks)
 
 
 def encrypt(plaintext, key):

@@ -240,7 +240,7 @@ class CipherScope(customtkinter.CTk):
             row=0, column=3, padx=(20, 20), pady=(20, 10))
 
         self.cipher_mode_optionmenu = customtkinter.CTkOptionMenu(self.cipher_frame, dynamic_resizing=False, values=[
-                                                                  "None", "CTR", "ECB"], command=self.change_cipher_mode_optionmenu_event)
+                                                                  "None", "CTR"], command=self.change_cipher_mode_optionmenu_event)
         self.cipher_mode_optionmenu.grid(
             row=1, column=0, padx=(20, 0), pady=(10, 20))
 
