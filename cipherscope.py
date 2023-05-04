@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import customtkinter
 import sys
 import os
@@ -47,10 +49,8 @@ class CipherScope(customtkinter.CTk):
         #     image_path, "cipherscope_dark.png")), size=(26, 26))
         self.logo_image = customtkinter.CTkImage(light_image=Image.open(os.path.join(image_path, "cipherscope_dark.png")),
                                                  dark_image=Image.open(os.path.join(image_path, "cipherscope_light.png")), size=(26, 26))
-        self.large_image = customtkinter.CTkImage(Image.open(
-            os.path.join(image_path, "large_image.png")), size=(500, 150))
-        self.image_icon_image = customtkinter.CTkImage(Image.open(
-            os.path.join(image_path, "image_icon_light.png")), size=(20, 20))
+        # self.large_image = customtkinter.CTkImage(Image.open(os.path.join(image_path, "large_image.png")), size=(500, 150))
+        # self.image_icon_image = customtkinter.CTkImage(Image.open(os.path.join(image_path, "image_icon_light.png")), size=(20, 20))
         self.info_image = customtkinter.CTkImage(light_image=Image.open(os.path.join(image_path, "info_dark.png")),
                                                  dark_image=Image.open(os.path.join(image_path, "info_light.png")), size=(20, 20))
         self.block_image = customtkinter.CTkImage(light_image=Image.open(os.path.join(image_path, "block_dark.png")),
@@ -63,8 +63,8 @@ class CipherScope(customtkinter.CTk):
         self.navigation_frame.grid(row=0, column=0, sticky="nsew")
         self.navigation_frame.grid_rowconfigure(1, weight=1)
 
-        self.navigation_frame_label = customtkinter.CTkLabel(self.navigation_frame, text="  " + self.APP_NAME, image=self.logo_image,
-                                                             compound="left", font=customtkinter.CTkFont(size=18, weight="bold"))
+        self.navigation_frame_label = customtkinter.CTkLabel(
+            self.navigation_frame, text="  " + self.APP_NAME, image=self.logo_image, compound="left", font=customtkinter.CTkFont(size=18, weight="bold"))
         self.navigation_frame_label.grid(row=0, column=0, padx=0, pady=20)
 
         # create scrollable frame
@@ -79,17 +79,17 @@ class CipherScope(customtkinter.CTk):
             self.navigation_frame, text="Appearance Mode:", anchor="w")
         self.appearance_mode_label.grid(
             row=2, column=0, padx=0, pady=(5, 0), sticky="s")
-        self.appearance_mode_menu = customtkinter.CTkOptionMenu(self.navigation_frame, values=["System", "Light", "Dark"],
-                                                                command=self.change_appearance_mode_event)
-        self.appearance_mode_menu.grid(
+        self.appearance_mode_optionmenu = customtkinter.CTkOptionMenu(self.navigation_frame, values=[
+                                                                      "System", "Light", "Dark"], command=self.change_appearance_mode_optionmenu_event)
+        self.appearance_mode_optionmenu.grid(
             row=3, column=0, padx=0, pady=(0, 5), sticky="s")
 
         self.scaling_label = customtkinter.CTkLabel(
             self.navigation_frame, text="UI Scaling:", anchor="w")
         self.scaling_label.grid(row=4, column=0, padx=0,
                                 pady=(5, 0), sticky="s")
-        self.scaling_optionemenu = customtkinter.CTkOptionMenu(self.navigation_frame, values=["80%", "90%", "100%", "110%", "120%", "200%"],
-                                                               command=self.change_scaling_event)
+        self.scaling_optionemenu = customtkinter.CTkOptionMenu(self.navigation_frame, values=[
+                                                               "80%", "90%", "100%", "110%", "120%", "200%"], command=self.change_scaling_event)
         self.scaling_optionemenu.grid(
             row=5, column=0, padx=0, pady=(0, 20), sticky="s")
 
@@ -197,8 +197,7 @@ class CipherScope(customtkinter.CTk):
         # create info frame
         # self.info_frame = customtkinter.CTkFrame(
         #     self, corner_radius=0, fg_color="transparent")
-        self.info_frame = customtkinter.CTkFrame(
-            self, corner_radius=0)
+        self.info_frame = customtkinter.CTkFrame(self, corner_radius=0)
         self.info_frame.grid_columnconfigure(0, weight=1)
 
         # self.info_frame_large_image_label = customtkinter.CTkLabel(
@@ -220,47 +219,56 @@ class CipherScope(customtkinter.CTk):
         # self.info_frame_button_4.grid(row=4, column=0, padx=20, pady=10)
 
         # create cipher frame
-        self.cipher_frame = customtkinter.CTkFrame(
-            self, corner_radius=0)
-        self.cipher_frame.grid_rowconfigure(1, weight=1)
+        self.cipher_frame = customtkinter.CTkFrame(self, corner_radius=0)
+        self.cipher_frame.grid_rowconfigure(2, weight=1)
         self.cipher_frame.grid_columnconfigure((1, 2), weight=1)
 
         # create main entry and button
-        self.cipher_entrymode_button = customtkinter.CTkSegmentedButton(
-            self.cipher_frame, values=["Hex", "Text", "Bin"], command=self.change_cipher_entrymode_button_event)
-        self.cipher_entrymode_button.grid(row=0, column=0, padx=(
-            20, 0), pady=(20, 20), sticky="nsew")
+        self.cipher_input_entrymode_button = customtkinter.CTkSegmentedButton(self.cipher_frame, values=[
+                                                                              "Hex", "Text", "Bin"], command=self.change_cipher_input_entrymode_button_event)
+        self.cipher_input_entrymode_button.grid(
+            row=0, column=0, padx=(20, 0), pady=(20, 10), sticky="nsew")
 
         self.cipher_input_entry = customtkinter.CTkEntry(
             self.cipher_frame, placeholder_text="Plaintext")
-        self.cipher_input_entry.grid(row=0, column=1, padx=(
-            20, 0), pady=(20, 20), sticky="nsew")
+        self.cipher_input_entry.grid(row=0, column=1, columnspan=2, padx=(
+            20, 0), pady=(20, 10), sticky="nsew")
+
+        self.cipher_transform_optionmenu = customtkinter.CTkOptionMenu(self.cipher_frame, dynamic_resizing=False, values=[
+                                                                       "Encrypt", "Decrypt"], command=self.change_cipher_transform_optionmenu_event)
+        self.cipher_transform_optionmenu.grid(
+            row=0, column=3, padx=(20, 20), pady=(20, 10))
+
+        self.cipher_mode_optionmenu = customtkinter.CTkOptionMenu(self.cipher_frame, dynamic_resizing=False, values=[
+                                                                  "None", "CTR", "ECB"], command=self.change_cipher_mode_optionmenu_event)
+        self.cipher_mode_optionmenu.grid(
+            row=1, column=0, padx=(20, 0), pady=(10, 20))
 
         self.cipher_key_entry = customtkinter.CTkEntry(
             self.cipher_frame, placeholder_text="Key")
-        self.cipher_key_entry.grid(row=0, column=2, padx=(
-            20, 0), pady=(20, 20), sticky="nsew")
+        self.cipher_key_entry.grid(row=1, column=1, padx=(
+            20, 0), pady=(10, 20), sticky="nsew")
 
-        self.cipher_optionmenu = customtkinter.CTkOptionMenu(self.cipher_frame, dynamic_resizing=False,
-                                                             values=["Encrypt", "Decrypt"], command=self.change_cipher_optionmenu_event)
-        self.cipher_optionmenu.grid(
-            row=0, column=3, padx=(20, 0), pady=(20, 20))
+        self.cipher_iv_entry = customtkinter.CTkEntry(
+            self.cipher_frame, placeholder_text="Initialization Vector")
+        self.cipher_iv_entry.grid(row=1, column=2, padx=(
+            20, 0), pady=(10, 20), sticky="nsew")
 
         self.cipher_start_button = customtkinter.CTkButton(self.cipher_frame, text="Start", fg_color="transparent", border_width=2, hover_color=(
             "#3B8ED0", "#1F6AA5"), text_color=("gray10", "#DCE4EE"), command=self.change_cipher_start_button_event)
         # self.cipher_start_button = customtkinter.CTkButton(
         #     self.cipher_frame, text="Start")
-        self.cipher_start_button.grid(row=0, column=4, padx=(
-            20, 20), pady=(20, 20), sticky="nsew")
+        self.cipher_start_button.grid(row=1, column=3, padx=(
+            20, 20), pady=(10, 20), sticky="nsew")
 
-        self.cipher_output_entrymode_button = customtkinter.CTkSegmentedButton(
-            self.cipher_frame, values=["Hex", "Text", "Bin"], command=self.change_cipher_output_entrymode_button_event)
-        self.cipher_output_entrymode_button.grid(row=2, column=0, padx=(
-            20, 0), pady=(20, 20), sticky="nsew")
+        self.cipher_output_entrymode_button = customtkinter.CTkSegmentedButton(self.cipher_frame, values=[
+                                                                               "Hex", "Text", "Bin"], command=self.change_cipher_output_entrymode_button_event)
+        self.cipher_output_entrymode_button.grid(
+            row=3, column=0, padx=(20, 0), pady=(20, 20), sticky="nsew")
 
         self.cipher_output_entry = customtkinter.CTkEntry(
             self.cipher_frame, placeholder_text="Ciphertext")
-        self.cipher_output_entry.grid(row=2, column=1, columnspan=4, padx=(
+        self.cipher_output_entry.grid(row=3, column=1, columnspan=3, padx=(
             20, 20), pady=(20, 20), sticky="nsew")
 
         # create textbox
@@ -269,8 +277,8 @@ class CipherScope(customtkinter.CTk):
                 self.cipher_frame, font=("Consolas", 12), state="disabled")
         else:
             self.cipher_textbox = customtkinter.CTkTextbox(
-                self.cipher_frame, font=("DejaVu Sans Mono", 12), state="disabled")
-        self.cipher_textbox.grid(row=1, column=0, columnspan=5, padx=(
+                self.cipher_frame, font=("DejaVu Sans Mono", 13), state="disabled")
+        self.cipher_textbox.grid(row=2, column=0, columnspan=4, padx=(
             20, 20), pady=(0, 0), sticky="nsew")
 
         # create block frame
@@ -282,10 +290,13 @@ class CipherScope(customtkinter.CTk):
         self.select_frame_by_name("info")
 
         # set default values
-        self.appearance_mode_menu.set("System")
+        self.appearance_mode_optionmenu.set("System")
         self.scaling_optionemenu.set("100%")
-        self.cipher_entrymode_button.set("Text")
-        self.cipher_optionmenu.set("Encrypt")
+        self.cipher_input_entrymode_button.set("Text")
+        self.cipher_transform_optionmenu.set("Encrypt")
+        self.cipher_mode_optionmenu.set("None")
+        self.cipher_iv_entry.configure(placeholder_text="Disabled")
+        self.cipher_iv_entry.configure(state="disabled")
         self.cipher_output_entrymode_button.set("Text")
 
     def on_close(self, event=0):
@@ -360,7 +371,7 @@ class CipherScope(customtkinter.CTk):
     def block_button_event(self):
         self.select_frame_by_name("block")
 
-    def change_appearance_mode_event(self, new_appearance_mode: str):
+    def change_appearance_mode_optionmenu_event(self, new_appearance_mode: str):
         customtkinter.set_appearance_mode(new_appearance_mode)
 
     def change_scaling_event(self, new_scaling: str):
@@ -370,15 +381,15 @@ class CipherScope(customtkinter.CTk):
         # customtkinter.set_window_scaling(new_scaling_float)
 
     # cipher
-    def change_cipher_optionmenu_event(self, new_optionmenu: str):
-        if "Decrypt" == new_optionmenu:
+    def change_cipher_transform_optionmenu_event(self, new_transform_optionmenu: str):
+        if "Decrypt" == new_transform_optionmenu:
             self.cipher_input_entry.configure(placeholder_text="Ciphertext")
             self.cipher_output_entry.configure(placeholder_text="Plaintext")
         else:
             self.cipher_input_entry.configure(placeholder_text="Plaintext")
             self.cipher_output_entry.configure(placeholder_text="Ciphertext")
 
-    def change_cipher_entrymode_button_event(self, new_entrymode: str):
+    def change_cipher_input_entrymode_button_event(self, new_entrymode: str):
         input_entry = self.cipher_input_entry.get()
         key_entry = self.cipher_key_entry.get()
         if "Hex" == new_entrymode:
@@ -400,6 +411,16 @@ class CipherScope(customtkinter.CTk):
                 self.cipher_key_entry.insert(
                     "insert", bytes.fromhex(key_entry).decode("utf-8"))
 
+    def change_cipher_mode_optionmenu_event(self, new_mode_optionmenu: str):
+        if "None" == new_mode_optionmenu:
+            self.cipher_iv_entry.delete("0", "end")
+            self.cipher_iv_entry.configure(placeholder_text="Disabled")
+            self.cipher_iv_entry.configure(state="disabled")
+        else:
+            self.cipher_iv_entry.configure(state="normal")
+            self.cipher_iv_entry.configure(
+                placeholder_text="Initialization Vector")
+
     def change_cipher_output_entrymode_button_event(self, new_entrymode: str):
         output_entry = self.cipher_output_entry.get()
         if output_entry:
@@ -412,20 +433,20 @@ class CipherScope(customtkinter.CTk):
                     "insert", bytes.fromhex(output_entry).decode("utf-8"))
 
     def change_cipher_start_button_event(self):
-        if "Hex" != self.cipher_entrymode_button.get():
-            self.cipher_entrymode_button.set("Hex")
-            self.change_cipher_entrymode_button_event("Hex")
+        if "Hex" != self.cipher_input_entrymode_button.get():
+            self.cipher_input_entrymode_button.set("Hex")
+            self.change_cipher_input_entrymode_button_event("Hex")
 
-        exec_folder = "aes"
+        exec_cipher = "aes"
         exec_file = "aes.py"
         exec_output_file_name = exec_file.split(".")[0] + ".txt"
 
         if sys.platform.startswith("win"):
-            exec_stdout = subprocess.check_output(["python", exec_folder + "\\" + exec_file, self.cipher_optionmenu.get().lower(), self.cipher_input_entry.get(),
-                                                   self.cipher_key_entry.get()])
+            exec_stdout = subprocess.check_output(["python", exec_cipher + "\\" + exec_file, self.cipher_transform_optionmenu.get(
+            ).lower(), self.cipher_input_entry.get(), self.cipher_key_entry.get()])
         else:
-            exec_stdout = subprocess.check_output([exec_folder + "/" + exec_file, self.cipher_optionmenu.get().lower(), self.cipher_input_entry.get(),
-                                                   self.cipher_key_entry.get()])
+            exec_stdout = subprocess.check_output([exec_cipher + "/" + exec_file, self.cipher_transform_optionmenu.get(
+            ).lower(), self.cipher_input_entry.get(), self.cipher_key_entry.get()])
 
         with open(exec_output_file_name, "r") as exec_output_file:
             exec_output_content = exec_output_file.read()
@@ -451,7 +472,7 @@ if __name__ == "__main__":
     # customtkinter.set_default_color_theme(os.path.join(os.path.dirname(
     #     os.path.realpath(__file__)), "assets", "themes", "kou-green.json"))
 
-    customtkinter.set_widget_scaling(int(100)/100)
+    customtkinter.set_widget_scaling(int(200)/100)
     # customtkinter.set_window_scaling(int(100)/100)
 
     app = CipherScope()
