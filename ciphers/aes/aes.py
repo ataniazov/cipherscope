@@ -394,13 +394,13 @@ class AES:
         return b''.join(blocks)
 
 
-def encrypt(plaintext, key):
+def encrypt_block(plaintext, key):
     output_file.write("encrypt({}, {})\n".format(plaintext, key))
     output_file.write("encrypt({}, {})\n\n".format(plaintext.hex(), key.hex()))
     return AES(key).encrypt_block(plaintext)
 
 
-def decrypt(ciphertext, key):
+def decrypt_block(ciphertext, key):
     output_file.write("decrypt({}, {})\n".format(ciphertext, key))
     output_file.write("decrypt({}, {})\n\n".format(
         ciphertext.hex(), key.hex()))
@@ -421,19 +421,19 @@ if __name__ == "__main__":
     output_file_name = os.path.splitext(os.path.basename(__file__))[0] + ".txt"
     output_file = open(output_file_name, "w")
 
-    if "encrypt".startswith(sys.argv[1]):
-        ciphertext = encrypt(text, key)
+    if "encrypt_block".startswith(sys.argv[1]):
+        ciphertext = encrypt_block(text, key)
         output_file.write(
-            "encrypt({}, {}):\n{}\n\n".format(text, key, ciphertext))
+            "encrypt_block({}, {}):\n{}\n\n".format(text, key, ciphertext))
         output_file.write(
-            "encrypt({}, {}):\n{}\n".format(text.hex(), key.hex(), ciphertext.hex()))
+            "encrypt_block({}, {}):\n{}\n".format(text.hex(), key.hex(), ciphertext.hex()))
         print(ciphertext.hex(), end="")
-    elif "decrypt".startswith(sys.argv[1]):
-        plaintext = decrypt(text, key)
+    elif "decrypt_block".startswith(sys.argv[1]):
+        plaintext = decrypt_block(text, key)
         output_file.write(
-            "decrypt({}, {}):\n{}\n\n".format(text, key, plaintext))
+            "decrypt_block({}, {}):\n{}\n\n".format(text, key, plaintext))
         output_file.write(
-            "decrypt({}, {}):\n{}\n".format(text.hex(), key.hex(), plaintext.hex()))
+            "decrypt_block({}, {}):\n{}\n".format(text.hex(), key.hex(), plaintext.hex()))
         print(plaintext.hex(), end="")
     output_file.close()
 
