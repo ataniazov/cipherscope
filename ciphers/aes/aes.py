@@ -395,23 +395,38 @@ class AES:
 
 
 def encrypt_block(plaintext, key):
-    output_file.write("encrypt({}, {})\n".format(plaintext, key))
-    output_file.write("encrypt({}, {})\n\n".format(plaintext.hex(), key.hex()))
+    output_file.write("encrypt_block({}, {})\n".format(plaintext, key))
+    output_file.write("encrypt_block({}, {})\n\n".format(
+        plaintext.hex(), key.hex()))
     return AES(key).encrypt_block(plaintext)
 
 
 def decrypt_block(ciphertext, key):
-    output_file.write("decrypt({}, {})\n".format(ciphertext, key))
-    output_file.write("decrypt({}, {})\n\n".format(
+    output_file.write("decrypt_block({}, {})\n".format(ciphertext, key))
+    output_file.write("decrypt_block({}, {})\n\n".format(
         ciphertext.hex(), key.hex()))
     return AES(key).decrypt_block(ciphertext)
+
+
+def encrypt_ctr(plaintext, key, iv):
+    output_file.write("encrypt_ctr({}, {}, {})\n".format(plaintext, key, iv))
+    output_file.write("encrypt_ctr({}, {}, {})\n\n".format(
+        plaintext.hex(), key.hex(), iv.hex()))
+    return AES(key).encrypt_ctr(plaintext, iv)
+
+
+def decrypt_ctr(ciphertext, key, iv):
+    output_file.write("decrypt_ctr({}, {}, {})\n".format(ciphertext, key, iv))
+    output_file.write("decrypt_ctr({}, {}, {})\n\n".format(
+        ciphertext.hex(), key.hex(), iv.hex()))
+    return AES(key).decrypt_ctr(ciphertext, iv)
 
 
 if __name__ == "__main__":
     import sys
     import os
 
-    if len(sys.argv) <= 2:
+    if len(sys.argv) < 3:
         # output_file.close()
         exit()
 
@@ -434,6 +449,22 @@ if __name__ == "__main__":
             "decrypt_block({}, {}):\n{}\n\n".format(text, key, plaintext))
         output_file.write(
             "decrypt_block({}, {}):\n{}\n".format(text.hex(), key.hex(), plaintext.hex()))
+        print(plaintext.hex(), end="")
+    elif "encrypt_ctr".startswith(sys.argv[1]):
+        iv = int(sys.argv[4].strip(), 16).to_bytes(16, "big")
+        ciphertext = encrypt_ctr(text, key, iv)
+        output_file.write(
+            "encrypt_ctr({}, {}, {}):\n{}\n\n".format(text, key, iv, ciphertext))
+        output_file.write(
+            "encrypt_ctr({}, {}, {}):\n{}\n".format(text.hex(), key.hex(), iv.hex(), ciphertext.hex()))
+        print(ciphertext.hex(), end="")
+    elif "decrypt_ctr".startswith(sys.argv[1]):
+        iv = int(sys.argv[4].strip(), 16).to_bytes(16, "big")
+        plaintext = decrypt_ctr(text, key, iv)
+        output_file.write(
+            "decrypt_ctr({}, {}, {}):\n{}\n\n".format(text, key, iv, plaintext))
+        output_file.write(
+            "decrypt_ctr({}, {}, {}):\n{}\n".format(text.hex(), key.hex(), iv.hex(), plaintext.hex()))
         print(plaintext.hex(), end="")
     output_file.close()
 
