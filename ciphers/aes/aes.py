@@ -150,21 +150,113 @@ def split_blocks(message, block_size=16, require_padding=True):
     return [message[i:i+16] for i in range(0, len(message), block_size)]
 
 
+def print_matrix(matrix, indent=8):
+    assert isinstance(matrix, list), f"\"{matrix}\" is not matrix!"
+    rows = len(matrix)
+    if rows > 0:
+        assert all(isinstance(row, list)
+                   for row in matrix), f"\"{matrix}\" is not matrix!"
+        cols = len(matrix[0])
+        if cols == 0:
+            return
+    else:
+        return
+
+    for row in range(rows):
+        output_file.write(" " * indent)
+        output_file.write("+----" * cols + "+" * (1 if cols > 0 else 0))
+        output_file.write("\n")
+
+        output_file.write(" " * indent)
+
+        for col in range(cols):
+            output_file.write("| {:02X} ".format(matrix_1[row][col]))
+        output_file.write("|\n")
+
+    output_file.write(" " * indent)
+    output_file.write("+----" * cols + "+" * (1 if cols > 0 else 0))
+    output_file.write("\n")
+
+
+def print_2_matrix(matrix_1, matrix_2, indent=8, gap=4):
+    assert isinstance(matrix_1, list), f"\"{matrix_1}\" is not matrix!"
+    rows_m1 = len(matrix_1)
+    if rows_m1 > 0:
+        assert all(isinstance(row, list)
+                   for row in matrix_1), f"\"{matrix_1}\" is not matrix!"
+        cols_m1 = len(matrix_1[0])
+    else:
+        cols_m1 = 0
+        gap = 0
+
+    assert isinstance(matrix_2, list), f"\"{matrix_2}\" is not matrix!"
+    rows_m2 = len(matrix_2)
+    if rows_m2 > 0:
+        assert all(isinstance(row, list)
+                   for row in matrix_2), f"\"{matrix_2}\" is not matrix!"
+        cols_m2 = len(matrix_2[0])
+    else:
+        cols_m2 = 0
+        gap = 0
+
+    rows = rows_m1 if rows_m1 > rows_m2 else rows_m2
+
+    if rows == 0:
+        return
+
+    for row in range(rows):
+        output_file.write(" " * indent)
+
+        if rows_m1 >= row:
+            output_file.write("+----" * cols_m1 + "+" *
+                              (1 if cols_m1 > 0 else 0) + " " * gap)
+        else:
+            output_file.write(" " * 5 * cols_m1 + " " *
+                              (1 if cols_m1 > 0 else 0) + " " * gap)
+
+        if rows_m2 >= row:
+            output_file.write("+----" * cols_m2 + "+" *
+                              (1 if cols_m2 > 0 else 0))
+        output_file.write("\n")
+
+        output_file.write(" " * indent)
+        if row < rows_m1:
+            for col in range(cols_m1):
+                output_file.write("| {:02X} ".format(matrix_1[row][col]))
+            output_file.write("|" + " " * gap)
+        else:
+            output_file.write(" " * 5 * cols_m1 + " " *
+                              (1 if cols_m1 > 0 else 0) + " " * gap)
+
+        if row < rows_m2:
+            for col in range(cols_m2):
+                output_file.write("| {:02X} ".format(matrix_2[row][col]))
+            output_file.write("|")
+        output_file.write("\n")
+
+    output_file.write(" " * indent)
+
+    if rows_m1 >= rows:
+        output_file.write("+----" * cols_m1 + "+" *
+                          (1 if cols_m1 > 0 else 0) + " " * gap)
+    else:
+        output_file.write(" " * 5 * cols_m1 + " " *
+                          (1 if cols_m1 > 0 else 0) + " " * gap)
+
+    if rows_m2 >= rows:
+        output_file.write("+----" * cols_m2 + "+" * (1 if cols_m2 > 0 else 0))
+    output_file.write("\n")
+
+
 def print_matrix_transpose(matrix, indent=8):
     transpose = list(zip(*matrix))
+    print_matrix(transpose, indent)
 
-    rows = len(transpose)
-    cols = len(transpose[0])
 
-    vertical_bar = " " * indent + "+----" * cols + "+\n"
-
-    for i in range(rows):
-        output_file.write(vertical_bar)
-        output_file.write(" " * indent)
-        for j in range(cols):
-            output_file.write("| {:02X} ".format(transpose[i][j]))
-        output_file.write("|\n")
-    output_file.write(vertical_bar)
+def print_2_matrix_transpose(matrix_1, matrix_2, indent=8, gap=4):
+    transpose_m1 = list(zip(*matrix_1))
+    transpose_m2 = list(zip(*matrix_2))
+    print_2_matrix(transpose_m1, transpose_m2, indent, gap)
 
 
 class AES:
@@ -468,10 +560,10 @@ if __name__ == "__main__":
         print(plaintext.hex(), end="")
     output_file.close()
 
-# python3 aes.py encrypt <plaintext> <key>
-# python3 aes.py encrypt 41545441434b204154204441574e2101 534f4d452031323820424954204b4559
+# python3 aes.py encrypt_block <plaintext> <key>
+# python3 aes.py encrypt_block 41545441434b204154204441574e2101 534f4d452031323820424954204b4559
 #                              "ATTACK AT DAWN!\x01"             "SOME 128 BIT KEY"
 
-# python3 aes.py decrypt <ciphertext> <key>
-# python3 aes.py decrypt 7d354e8b1dc429a300abac87c050951a 534f4d452031323820424954204b4559
+# python3 aes.py decrypt_block <ciphertext> <key>
+# python3 aes.py decrypt_block 7d354e8b1dc429a300abac87c050951a 534f4d452031323820424954204b4559
 #                                  <ciphertext>                  "SOME 128 BIT KEY"
