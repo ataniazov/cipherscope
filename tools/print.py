@@ -19,7 +19,7 @@ def print_matrix(matrix, indent=8):
         buf += " " * indent
 
         for col in range(cols):
-            buf += "| {:02X} ".format(matrix_1[row][col])
+            buf += "| {:02X} ".format(matrix[row][col])
         buf += "|\n"
 
     buf += " " * indent

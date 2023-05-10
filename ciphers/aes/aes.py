@@ -154,36 +154,38 @@ def print_matrix(matrix, indent=8):
     assert isinstance(matrix, list), f"\"{matrix}\" is not matrix!"
     rows = len(matrix)
     if rows > 0:
-        assert all(isinstance(row, list)
-                   for row in matrix), f"\"{matrix}\" is not matrix!"
+        # assert all(isinstance(row, list)
+        #            for row in matrix), f"\"{matrix}\" is not matrix!"
         cols = len(matrix[0])
         if cols == 0:
             return
     else:
         return
 
-    for row in range(rows):
-        output_file.write(" " * indent)
-        output_file.write("+----" * cols + "+" * (1 if cols > 0 else 0))
-        output_file.write("\n")
+    buf = ""
 
-        output_file.write(" " * indent)
+    for row in range(rows):
+        buf += " " * indent
+        buf += "+----" * cols + "+" * (1 if cols > 0 else 0) + "\n"
+
+        buf += " " * indent
 
         for col in range(cols):
-            output_file.write("| {:02X} ".format(matrix_1[row][col]))
-        output_file.write("|\n")
+            buf += "| {:02X} ".format(matrix[row][col])
+        buf += "|\n"
 
-    output_file.write(" " * indent)
-    output_file.write("+----" * cols + "+" * (1 if cols > 0 else 0))
-    output_file.write("\n")
+    buf += " " * indent
+    buf += "+----" * cols + "+" * (1 if cols > 0 else 0) + "\n"
+
+    output_file.write(buf)
 
 
 def print_2_matrix(matrix_1, matrix_2, indent=8, gap=4):
     assert isinstance(matrix_1, list), f"\"{matrix_1}\" is not matrix!"
     rows_m1 = len(matrix_1)
     if rows_m1 > 0:
-        assert all(isinstance(row, list)
-                   for row in matrix_1), f"\"{matrix_1}\" is not matrix!"
+        # assert all(isinstance(row, list)
+        #            for row in matrix_1), f"\"{matrix_1}\" is not matrix!"
         cols_m1 = len(matrix_1[0])
     else:
         cols_m1 = 0
@@ -192,8 +194,8 @@ def print_2_matrix(matrix_1, matrix_2, indent=8, gap=4):
     assert isinstance(matrix_2, list), f"\"{matrix_2}\" is not matrix!"
     rows_m2 = len(matrix_2)
     if rows_m2 > 0:
-        assert all(isinstance(row, list)
-                   for row in matrix_2), f"\"{matrix_2}\" is not matrix!"
+        # assert all(isinstance(row, list)
+        #            for row in matrix_2), f"\"{matrix_2}\" is not matrix!"
         cols_m2 = len(matrix_2[0])
     else:
         cols_m2 = 0
@@ -204,48 +206,48 @@ def print_2_matrix(matrix_1, matrix_2, indent=8, gap=4):
     if rows == 0:
         return
 
+    buf = ""
+
     for row in range(rows):
-        output_file.write(" " * indent)
+        buf += " " * indent
 
         if rows_m1 >= row:
-            output_file.write("+----" * cols_m1 + "+" *
-                              (1 if cols_m1 > 0 else 0) + " " * gap)
+            buf += "+----" * cols_m1 + "+" * \
+                (1 if cols_m1 > 0 else 0) + " " * gap
         else:
-            output_file.write(" " * 5 * cols_m1 + " " *
-                              (1 if cols_m1 > 0 else 0) + " " * gap)
+            buf += " " * 5 * cols_m1 + " " * \
+                (1 if cols_m1 > 0 else 0) + " " * gap
 
         if rows_m2 >= row:
-            output_file.write("+----" * cols_m2 + "+" *
-                              (1 if cols_m2 > 0 else 0))
-        output_file.write("\n")
+            buf += "+----" * cols_m2 + "+" * (1 if cols_m2 > 0 else 0)
+        buf += "\n"
 
-        output_file.write(" " * indent)
+        buf += " " * indent
         if row < rows_m1:
             for col in range(cols_m1):
-                output_file.write("| {:02X} ".format(matrix_1[row][col]))
-            output_file.write("|" + " " * gap)
+                buf += "| {:02X} ".format(matrix_1[row][col])
+            buf += "|" + " " * gap
         else:
-            output_file.write(" " * 5 * cols_m1 + " " *
-                              (1 if cols_m1 > 0 else 0) + " " * gap)
+            buf += " " * 5 * cols_m1 + " " * \
+                (1 if cols_m1 > 0 else 0) + " " * gap
 
         if row < rows_m2:
             for col in range(cols_m2):
-                output_file.write("| {:02X} ".format(matrix_2[row][col]))
-            output_file.write("|")
-        output_file.write("\n")
+                buf += "| {:02X} ".format(matrix_2[row][col])
+            buf += "|"
+        buf += "\n"
 
-    output_file.write(" " * indent)
+    buf += " " * indent
 
     if rows_m1 >= rows:
-        output_file.write("+----" * cols_m1 + "+" *
-                          (1 if cols_m1 > 0 else 0) + " " * gap)
+        buf += "+----" * cols_m1 + "+" * (1 if cols_m1 > 0 else 0) + " " * gap
     else:
-        output_file.write(" " * 5 * cols_m1 + " " *
-                          (1 if cols_m1 > 0 else 0) + " " * gap)
+        buf += " " * 5 * cols_m1 + " " * (1 if cols_m1 > 0 else 0) + " " * gap
 
     if rows_m2 >= rows:
-        output_file.write("+----" * cols_m2 + "+" * (1 if cols_m2 > 0 else 0))
-    output_file.write("\n")
+        buf += "+----" * cols_m2 + "+" * (1 if cols_m2 > 0 else 0)
+
+    output_file.write(buf + "\n")
 
 
 def print_matrix_transpose(matrix, indent=8):
@@ -257,6 +259,26 @@ def print_2_matrix_transpose(matrix_1, matrix_2, indent=8, gap=4):
     transpose_m1 = list(zip(*matrix_1))
     transpose_m2 = list(zip(*matrix_2))
     print_2_matrix(transpose_m1, transpose_m2, indent, gap)
+
+
+def print_msg_box(msg, indent=0, align=1, width=None, title=None):
+    lines = msg.split("\n")
+    space = " " * align
+
+    if not width:
+        width = max(map(len, lines))
+
+    buf = f"{' ' * indent}+{'-' * (width + align * 2)}+\n"
+
+    if title:
+        buf += f"{' ' * indent}|{space}{title:<{width}}{space}|\n"
+        buf += f"{' ' * indent}|{space}{'-' * len(title):<{width}}{space}|\n"
+
+    buf += "".join([f"{' ' * indent}|{space}{line:<{width}}{space}|\n" for line in lines])
+
+    buf += f"{' ' * indent}+{'-' * (width + align * 2)}+\n"
+
+    output_file.write(buf)
 
 
 class AES:
@@ -288,14 +310,14 @@ class AES:
             print_matrix_transpose(self._key_matrices[i])
             output_file.write("\n")
 
-        # print(str((matrix2bytes(self._key_matrices[0])).hex()))
-        # print(self._key_matrices[0])
+        # output_file.write(str((matrix2bytes(self._key_matrices[0])).hex()))
+        # output_file.write(self._key_matrices[0])
         # output_file.write("\n")
 
         # for i in range(1, len(self._key_matrices)):
         #     output_file.write("\n")
         #     for j in range(len(self._key_matrices[i])):
-        #         print(str(self._key_matrices[i][j].hex()), end="\n")
+        #         output_file.write(str(self._key_matrices[i][j].hex()), end="\n")
         #     output_file.write("\n")
 
     def _expand_key(self, master_key):
@@ -349,15 +371,15 @@ class AES:
         output_file.write("\n")
 
         add_round_key(plain_state, self._key_matrices[0])
-        print_matrix_transpose(self._key_matrices[0])
+        print_2_matrix_transpose(plain_state, self._key_matrices[0])
+        # print_matrix_transpose(self._key_matrices[0])
 
-        output_file.write("plain_state:\n")
-        print_matrix_transpose(plain_state)
+        # output_file.write("plain_state:\n")
+        # print_matrix_transpose(plain_state)
         output_file.write("\n")
 
         for i in range(1, self.n_rounds):
-            output_file.write(
-                "+----------+\n| Round {:2} |\n+----------+\n".format(i))
+            print_msg_box("Round: {:2}".format(i))
 
             sub_bytes(plain_state)
             print_matrix_transpose(plain_state)
@@ -372,9 +394,10 @@ class AES:
             output_file.write("\n")
 
             add_round_key(plain_state, self._key_matrices[i])
-            print_matrix_transpose(self._key_matrices[i])
-            output_file.write("plain_state:\n")
-            print_matrix_transpose(plain_state)
+            print_2_matrix_transpose(plain_state, self._key_matrices[i])
+            # print_matrix_transpose(self._key_matrices[i])
+            # output_file.write("plain_state:\n")
+            # print_matrix_transpose(plain_state)
             output_file.write("\n")
 
         sub_bytes(plain_state)
@@ -386,9 +409,10 @@ class AES:
         output_file.write("\n")
 
         add_round_key(plain_state, self._key_matrices[-1])
-        print_matrix_transpose(self._key_matrices[0])
-        output_file.write("plain_state:\n")
-        print_matrix_transpose(plain_state)
+        print_2_matrix_transpose(plain_state, self._key_matrices[-1])
+        # print_matrix_transpose(self._key_matrices[-1])
+        # output_file.write("plain_state:\n")
+        # print_matrix_transpose(plain_state)
         output_file.write("\n")
 
         return matrix2bytes(plain_state)
@@ -408,10 +432,11 @@ class AES:
         output_file.write("\n")
 
         add_round_key(cipher_state, self._key_matrices[-1])
-        print_matrix_transpose(self._key_matrices[-1])
+        print_2_matrix_transpose(cipher_state, self._key_matrices[-1])
+        # print_matrix_transpose(self._key_matrices[-1])
 
-        output_file.write("cipher_state:\n")
-        print_matrix_transpose(cipher_state)
+        # output_file.write("cipher_state:\n")
+        # print_matrix_transpose(cipher_state)
         output_file.write("\n")
 
         inv_shift_rows(cipher_state)
@@ -423,13 +448,13 @@ class AES:
         output_file.write("\n")
 
         for i in range(self.n_rounds - 1, 0, -1):
-            output_file.write(
-                "+----------+\n| Round {:2} |\n+----------+\n".format(self.n_rounds-i))
+            print_msg_box("Round: {:2}".format(self.n_rounds-i))
 
             add_round_key(cipher_state, self._key_matrices[i])
-            print_matrix_transpose(self._key_matrices[i])
-            output_file.write("cipher_state:\n")
-            print_matrix_transpose(cipher_state)
+            print_2_matrix_transpose(cipher_state, self._key_matrices[i])
+            # print_matrix_transpose(self._key_matrices[i])
+            # output_file.write("cipher_state:\n")
+            # print_matrix_transpose(cipher_state)
             output_file.write("\n")
 
             inv_mix_columns(cipher_state)
@@ -445,10 +470,11 @@ class AES:
             output_file.write("\n")
 
         add_round_key(cipher_state, self._key_matrices[0])
-        print_matrix_transpose(self._key_matrices[0])
+        print_2_matrix_transpose(cipher_state, self._key_matrices[0])
+        # print_matrix_transpose(self._key_matrices[0])
 
-        output_file.write("cipher_state:\n")
-        print_matrix_transpose(cipher_state)
+        # output_file.write("cipher_state:\n")
+        # print_matrix_transpose(cipher_state)
         output_file.write("\n")
 
         return matrix2bytes(cipher_state)
