@@ -10,20 +10,22 @@ def print_matrix(matrix, indent=8):
     else:
         return
 
-    for row in range(rows):
-        print(" " * indent, end="")
-        print("+----" * cols + "+" * (1 if cols > 0 else 0), end="")
-        print("\n", end="")
+    buf = ""
 
-        print(" " * indent, end="")
+    for row in range(rows):
+        buf += " " * indent
+        buf += "+----" * cols + "+" * (1 if cols > 0 else 0) + "\n"
+
+        buf += " " * indent
 
         for col in range(cols):
-            print("| {:02X} ".format(matrix_1[row][col]), end="")
-        print("|\n", end="")
+            buf += "| {:02X} ".format(matrix_1[row][col])
+        buf += "|\n"
 
-    print(" " * indent, end="")
-    print("+----" * cols + "+" * (1 if cols > 0 else 0), end="")
-    print("\n", end="")
+    buf += " " * indent
+    buf += "+----" * cols + "+" * (1 if cols > 0 else 0) + "\n"
+
+    print(buf, end="")
 
 
 def print_2_matrix(matrix_1, matrix_2, indent=8, gap=4):
@@ -52,48 +54,48 @@ def print_2_matrix(matrix_1, matrix_2, indent=8, gap=4):
     if rows == 0:
         return
 
+    buf = ""
+
     for row in range(rows):
-        print(" " * indent, end="")
+        buf += " " * indent
 
         if rows_m1 >= row:
-            print("+----" * cols_m1 + "+" *
-                  (1 if cols_m1 > 0 else 0) + " " * gap, end="")
+            buf += "+----" * cols_m1 + "+" * \
+                (1 if cols_m1 > 0 else 0) + " " * gap
         else:
-            print(" " * 5 * cols_m1 + " " *
-                  (1 if cols_m1 > 0 else 0) + " " * gap, end="")
+            buf += " " * 5 * cols_m1 + " " * \
+                (1 if cols_m1 > 0 else 0) + " " * gap
 
         if rows_m2 >= row:
-            print("+----" * cols_m2 + "+" *
-                  (1 if cols_m2 > 0 else 0), end="")
-        print("\n", end="")
+            buf += "+----" * cols_m2 + "+" * (1 if cols_m2 > 0 else 0)
+        buf += "\n"
 
-        print(" " * indent, end="")
+        buf += " " * indent
         if row < rows_m1:
             for col in range(cols_m1):
-                print("| {:02X} ".format(matrix_1[row][col]), end="")
-            print("|" + " " * gap, end="")
+                buf += "| {:02X} ".format(matrix_1[row][col])
+            buf += "|" + " " * gap
         else:
-            print(" " * 5 * cols_m1 + " " *
-                  (1 if cols_m1 > 0 else 0) + " " * gap, end="")
+            buf += " " * 5 * cols_m1 + " " * \
+                (1 if cols_m1 > 0 else 0) + " " * gap
 
         if row < rows_m2:
             for col in range(cols_m2):
-                print("| {:02X} ".format(matrix_2[row][col]), end="")
-            print("|", end="")
-        print("\n", end="")
+                buf += "| {:02X} ".format(matrix_2[row][col])
+            buf += "|"
+        buf += "\n"
 
-    print(" " * indent, end="")
+    buf += " " * indent
 
     if rows_m1 >= rows:
-        print("+----" * cols_m1 + "+" *
-              (1 if cols_m1 > 0 else 0) + " " * gap, end="")
+        buf += "+----" * cols_m1 + "+" * (1 if cols_m1 > 0 else 0) + " " * gap
     else:
-        print(" " * 5 * cols_m1 + " " *
-              (1 if cols_m1 > 0 else 0) + " " * gap, end="")
+        buf += " " * 5 * cols_m1 + " " * (1 if cols_m1 > 0 else 0) + " " * gap
 
     if rows_m2 >= rows:
-        print("+----" * cols_m2 + "+" * (1 if cols_m2 > 0 else 0), end="")
-    print("\n", end="")
+        buf += "+----" * cols_m2 + "+" * (1 if cols_m2 > 0 else 0)
+
+    print(buf + "\n", end="")
 
 
 def print_array(array, indent=8):
@@ -102,18 +104,18 @@ def print_array(array, indent=8):
     if length == 0:
         return
 
-    print(" " * indent, end="")
-    print("+----" * length + "+" * (1 if length > 0 else 0), end="")
-    print("\n", end="")
+    buf = " " * indent
+    buf += "+----" * length + "+" * (1 if length > 0 else 0) + "\n"
 
-    print(" " * indent, end="")
+    buf += " " * indent
     for index in range(length):
-        print("| {:02X} ".format(array[index]), end="")
-    print("|\n", end="")
+        buf += "| {:02X} ".format(array[index])
+    buf += "|\n"
 
-    print(" " * indent, end="")
-    print("+----" * length + "+" * (1 if length > 0 else 0), end="")
-    print("\n", end="")
+    buf += " " * indent
+    buf += "+----" * length + "+" * (1 if length > 0 else 0) + "\n"
+
+    print(buf, end="")
 
 
 def print_2_array_up_down(array_1, array_2, indent=8):
@@ -128,29 +130,30 @@ def print_2_array_up_down(array_1, array_2, indent=8):
     if length == 0:
         return
 
+    buf = ""
+
     if length_a1 > 0:
-        print(" " * indent, end="")
-        print("+----" * length_a1 + "+" * (1 if length_a1 > 0 else 0), end="")
-        print("\n", end="")
+        buf += " " * indent
+        buf += "+----" * length_a1 + "+" * (1 if length_a1 > 0 else 0) + "\n"
 
-        print(" " * indent, end="")
+        buf += " " * indent
         for index in range(length_a1):
-            print("| {:02X} ".format(array_1[index]), end="")
-        print("|\n", end="")
+            buf += "| {:02X} ".format(array_1[index])
+        buf += "|\n"
 
-    print(" " * indent, end="")
-    print("+----" * length + "+" * (1 if length > 0 else 0), end="")
-    print("\n", end="")
+    buf += " " * indent
+    buf += "+----" * length + "+" * (1 if length > 0 else 0) + "\n"
 
     if length_a2 > 0:
-        print(" " * indent, end="")
+        buf += " " * indent
         for index in range(length_a2):
-            print("| {:02X} ".format(array_2[index]), end="")
-        print("|\n", end="")
+            buf += "| {:02X} ".format(array_2[index])
+        buf += "|\n"
 
-        print(" " * indent, end="")
-        print("+----" * length_a2 + "+" * (1 if length_a2 > 0 else 0), end="")
-        print("\n", end="")
+        buf += " " * indent
+        buf += "+----" * length_a2 + "+" * (1 if length_a2 > 0 else 0) + "\n"
+
+    print(buf, end="")
 
 
 def print_2_array_left_right(array_1, array_2, indent=8, gap=4):
@@ -163,38 +166,59 @@ def print_2_array_left_right(array_1, array_2, indent=8, gap=4):
     if length_a1 == 0 and length_a2 == 0:
         return
 
-    print(" " * indent, end="")
+    buf = " " * indent
     if length_a1 > 0:
-        print("+----" * length_a1 + "+" * (1 if length_a1 > 0 else 0), end="")
-        print(" " * gap, end="")
+        buf += "+----" * length_a1 + "+" * (1 if length_a1 > 0 else 0)
+        buf += " " * gap
 
     if length_a2 > 0:
-        print("+----" * length_a2 + "+" * (1 if length_a2 > 0 else 0), end="")
-    print("\n", end="")
+        buf += "+----" * length_a2 + "+" * (1 if length_a2 > 0 else 0)
+    buf += "\n"
 
-    print(" " * indent, end="")
+    buf += " " * indent
 
     if length_a1 > 0:
         for index in range(length_a1):
-            print("| {:02X} ".format(array_1[index]), end="")
-        print("|", end="")
-        print(" " * gap, end="")
+            buf += "| {:02X} ".format(array_1[index])
+        buf += "|"
+        buf += " " * gap
 
     if length_a2 > 0:
         for index in range(length_a2):
-            print("| {:02X} ".format(array_2[index]), end="")
-        print("|", end="")
+            buf += "| {:02X} ".format(array_2[index])
+        buf += "|"
 
-    print("\n", end="")
+    buf += "\n"
 
-    print(" " * indent, end="")
+    buf += " " * indent
     if length_a1 > 0:
-        print("+----" * length_a1 + "+" * (1 if length_a1 > 0 else 0), end="")
-        print(" " * gap, end="")
+        buf += "+----" * length_a1 + "+" * (1 if length_a1 > 0 else 0)
+        buf += " " * gap
 
     if length_a2 > 0:
-        print("+----" * length_a2 + "+" * (1 if length_a2 > 0 else 0), end="")
-    print("\n", end="")
+        buf += "+----" * length_a2 + "+" * (1 if length_a2 > 0 else 0)
+
+    print(buf + "\n", end="")
+
+
+def print_msg_box(msg, indent=0, align=1, width=None, title=None):
+    lines = msg.split("\n")
+    space = " " * align
+
+    if not width:
+        width = max(map(len, lines))
+
+    buf = f"{' ' * indent}+{'-' * (width + align * 2)}+\n"
+
+    if title:
+        buf += f"{' ' * indent}|{space}{title:<{width}}{space}|\n"
+        buf += f"{' ' * indent}|{space}{'-' * len(title):<{width}}{space}|\n"
+
+    buf += "".join([f"{' ' * indent}|{space}{line:<{width}}{space}|\n" for line in lines])
+
+    buf += f"{' ' * indent}+{'-' * (width + align * 2)}+\n"
+
+    print(buf, end="")
 
 
 def print_array_bit_diff(array_1, array_2, indent=4):
@@ -214,41 +238,41 @@ def print_array_bit_diff(array_1, array_2, indent=4):
     if length_max == 0:
         return
 
-    print(" " * (indent-1), end="")
-    print("+--------" * length_max + "+" *
-          (1 if length_max > 0 else 0), end="")
-    print("\n", end="")
+    buf = " " * (indent-1)
+    buf += "+--------" * length_max + "+" * (1 if length_max > 0 else 0) + "\n"
 
     if length_a1 > 0:
-        print(" " * indent, end="")
+        buf += " " * indent
         for index in range(length_a1):
-            print("{:08b} ".format(array_1[index]), end="")
-        print("\n", end="")
+            buf += "{:08b} ".format(array_1[index])
+        buf += "\n"
 
     if length_a2 > 0:
-        print(" " * indent, end="")
+        buf += " " * indent
         for index in range(length_a2):
-            print("{:08b} ".format(array_2[index]), end="")
-        print("\n", end="")
+            buf += "{:08b} ".format(array_2[index])
+        buf += "\n"
 
-    print(" " * (indent-1), end="")
-    print("+--------" * length_max + "+" *
-          (1 if length_max > 0 else 0), end="")
-    print("\n", end="")
+    buf += " " * (indent-1)
+    buf += "+--------" * length_max + "+" * (1 if length_max > 0 else 0) + "\n"
 
     count = 0
-    print(" " * (indent), end="")
+    buf += " " * indent
     for index in range(length_min):
         diff = array_1[index] ^ array_2[index]
         while diff:
             count += diff & 1
             diff >>= 1
-        print("{:08b} ".format(array_1[index] ^ array_2[index]), end="")
-    print("\n", end="")
+        buf += "{:08b} ".format(array_1[index] ^ array_2[index]
+                                ).replace("0", "-").replace("1", "X")
+    buf += "\n"
 
-    print("\n", end="")
-    print(" " * (indent), end="")
-    print("Bit difference: {}".format(count))
+    buf += " " * (indent-1)
+    buf += "+--------" * length_max + "+" * (1 if length_max > 0 else 0) + "\n"
+
+    print(buf+"\n", end="")
+
+    print_msg_box("Bit difference: {}".format(count), indent-1)
 
 
 matrix_1 = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 16]]
@@ -277,3 +301,5 @@ print("\n")
 print_array_bit_diff(array_1, array_2, 2)
 
 print("\n")
+
+print_msg_box("Message Box", indent=4, align=5)
