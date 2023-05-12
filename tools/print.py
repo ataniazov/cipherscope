@@ -258,13 +258,14 @@ def print_array_bit_diff(array_1, array_2, indent=4):
 
     count = 0
     buf += " " * indent
-    for index in range(length_min):
-        diff = array_1[index] ^ array_2[index]
+    for cell_index in range(length_max):
+        diff = (array_1[cell_index] if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
+            array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index])))
         while diff:
             count += diff & 1
             diff >>= 1
-        buf += "{:08b} ".format(array_1[index] ^ array_2[index]
-                                ).replace("0", "-").replace("1", "X")
+        buf += "{:08b} ".format(((array_1[cell_index]) if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
+            array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index])))).replace("0", "-").replace("1", "X")
     buf += "\n"
 
     buf += " " * (indent-1)
@@ -275,12 +276,77 @@ def print_array_bit_diff(array_1, array_2, indent=4):
     print_msg_box("Bit difference: {}".format(count), indent-1)
 
 
+def print_array_bit_diff_column(array_1, array_2, indent=4, column=8):
+    assert isinstance(array_1, list), f"\"{array_1}\" is not array!"
+    length_a1 = len(array_1)
+
+    assert isinstance(array_2, list), f"\"{array_2}\" is not array!"
+    length_a2 = len(array_2)
+
+    if length_a1 > length_a2:
+        length_max = length_a1
+        length_min = length_a2
+    else:
+        length_min = length_a1
+        length_max = length_a2
+
+    if length_max == 0:
+        return
+
+    buf = ""
+    count = 0
+
+    for index in range(0, length_max, column):
+        buf += " " * (indent-1)
+        buf += "+--------" * (column if index+column <= length_max else length_max -
+                              index) + "+" * (1 if length_max > 0 else 0) + "\n"
+
+        if index < length_a1:
+            buf += " " * indent
+            for cell in range(index, (index+column) if (index+column) <= length_a1 else length_a1):
+                buf += "{:08b} ".format(array_1[cell])
+        buf += "\n"
+
+        if index < length_a2:
+            buf += " " * indent
+            for cell in range(index, (index+column) if (index+column) <= length_a2 else length_a2):
+                buf += "{:08b} ".format(array_2[cell])
+        buf += "\n"
+
+        buf += " " * (indent-1)
+        buf += "+--------" * (column if index+column <= length_max else length_max -
+                              index) + "+" * (1 if length_max > 0 else 0) + "\n"
+
+        buf += " " * indent
+        for cell_index in range(index, (index+column) if (index+column) <= length_max else length_max):
+            diff = (array_1[cell_index] if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
+                array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index])))
+            while diff:
+                count += diff & 1
+                diff >>= 1
+            buf += "{:08b} ".format(((array_1[cell_index]) if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
+                array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index])))).replace("0", "-").replace("1", "X")
+        buf += "\n"
+
+        buf += " " * (indent-1)
+        buf += "+--------" * (column if index+column <= length_max else length_max -
+                              index) + "+" * (1 if length_max > 0 else 0) + "\n"
+        buf += "\n"
+
+    print(buf, end="")
+
+    print_msg_box("Bit difference: {}".format(count), indent-1)
+
+
 matrix_1 = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 16]]
 matrix_2 = [[17, 18, 19, 20], [21, 22, 23, 24],
             [25, 26, 27, 28], [29, 30, 31, 32]]
 
-array_1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
-array_2 = [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]
+array_1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+array_2 = [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+
+# array_1 = [0, 1, 2, 3, 4, 5, 6, 7]
+# array_2 = [8, 9, 10, 11, 12, 13, 14, 15]
 
 print_matrix(matrix_1)
 
@@ -298,8 +364,17 @@ print_2_array_left_right(array_1, array_2, 0, 2)
 
 print("\n")
 
-print_array_bit_diff(array_1, array_2, 2)
+print_array_bit_diff(array_1, array_2, indent=2)
 
 print("\n")
 
 print_msg_box("Message Box", indent=4, align=5)
+
+print("\n")
+
+array_2.insert(14, 32)
+array_2.reverse()
+array_2.remove(24)
+array_1.remove(0)
+
+print_array_bit_diff_column(array_1, array_2, indent=4, column=8)
