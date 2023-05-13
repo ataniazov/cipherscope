@@ -238,26 +238,26 @@ def print_array_bit_diff(array_1, array_2, indent=4):
     if length_max == 0:
         return
 
-    buf = " " * (indent-1)
+    buf = " " * indent
     buf += "+--------" * length_max + "+" * (1 if length_max > 0 else 0) + "\n"
 
     if length_a1 > 0:
-        buf += " " * indent
+        buf += " " * (indent+1)
         for index in range(length_a1):
             buf += "{:08b} ".format(array_1[index])
         buf += "\n"
 
     if length_a2 > 0:
-        buf += " " * indent
+        buf += " " * (indent+1)
         for index in range(length_a2):
             buf += "{:08b} ".format(array_2[index])
         buf += "\n"
 
-    buf += " " * (indent-1)
+    buf += " " * indent
     buf += "+--------" * length_max + "+" * (1 if length_max > 0 else 0) + "\n"
 
     count = 0
-    buf += " " * indent
+    buf += " " * (indent+1)
     for cell_index in range(length_max):
         diff = (array_1[cell_index] if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
             array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index])))
@@ -268,20 +268,22 @@ def print_array_bit_diff(array_1, array_2, indent=4):
             array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index])))).replace("0", "-").replace("1", "X")
     buf += "\n"
 
-    buf += " " * (indent-1)
+    buf += " " * indent
     buf += "+--------" * length_max + "+" * (1 if length_max > 0 else 0) + "\n"
 
     print(buf+"\n", end="")
 
-    print_msg_box("Bit difference: {}".format(count), indent-1)
+    print_msg_box("Bit difference: {}".format(count), indent)
 
 
-def print_array_bit_diff_column(array_1, array_2, indent=4, column=8):
+def print_array_bit_diff_column(array_1, array_2, indent=4, column=8, hex=False):
     assert isinstance(array_1, list), f"\"{array_1}\" is not array!"
     length_a1 = len(array_1)
 
     assert isinstance(array_2, list), f"\"{array_2}\" is not array!"
     length_a2 = len(array_2)
+
+    assert column > 0, f"column number can not be: {column}"
 
     if length_a1 > length_a2:
         length_max = length_a1
@@ -297,45 +299,52 @@ def print_array_bit_diff_column(array_1, array_2, indent=4, column=8):
     count = 0
 
     for index in range(0, length_max, column):
-        buf += " " * (indent-1)
-        buf += "+--------" * (column if index+column <= length_max else length_max -
-                              index) + "+" * (1 if length_max > 0 else 0) + "\n"
+        buf += " " * indent
+        buf += ("+--------" + "---" * (1 if hex else 0)) * (column if index+column <=
+                                                            length_max else length_max - index) + "+" * (1 if length_max > 0 else 0) + "\n"
 
         if index < length_a1:
-            buf += " " * indent
+            buf += " " * (indent+1)
             for cell in range(index, (index+column) if (index+column) <= length_a1 else length_a1):
+                if hex:
+                    buf += "{:02X}:".format(array_1[cell])
                 buf += "{:08b} ".format(array_1[cell])
         buf += "\n"
 
         if index < length_a2:
-            buf += " " * indent
+            buf += " " * (indent+1)
             for cell in range(index, (index+column) if (index+column) <= length_a2 else length_a2):
+                if hex:
+                    buf += "{:02X}:".format(array_2[cell])
                 buf += "{:08b} ".format(array_2[cell])
         buf += "\n"
 
-        buf += " " * (indent-1)
-        buf += "+--------" * (column if index+column <= length_max else length_max -
-                              index) + "+" * (1 if length_max > 0 else 0) + "\n"
-
         buf += " " * indent
+        buf += ("+--------" + "---" * (1 if hex else 0)) * (column if index+column <=
+                                                            length_max else length_max - index) + "+" * (1 if length_max > 0 else 0) + "\n"
+
+        buf += " " * (indent+1)
         for cell_index in range(index, (index+column) if (index+column) <= length_max else length_max):
             diff = (array_1[cell_index] if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
                 array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index])))
             while diff:
                 count += diff & 1
                 diff >>= 1
+            if hex:
+                buf += "{:02X}:".format(((array_1[cell_index]) if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
+                    array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index]))))
             buf += "{:08b} ".format(((array_1[cell_index]) if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
                 array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index])))).replace("0", "-").replace("1", "X")
         buf += "\n"
 
-        buf += " " * (indent-1)
-        buf += "+--------" * (column if index+column <= length_max else length_max -
-                              index) + "+" * (1 if length_max > 0 else 0) + "\n"
+        buf += " " * indent
+        buf += ("+--------" + "---" * (1 if hex else 0)) * (column if index+column <=
+                                                            length_max else length_max - index) + "+" * (1 if length_max > 0 else 0) + "\n"
         buf += "\n"
 
     print(buf, end="")
 
-    print_msg_box("Bit difference: {}".format(count), indent-1)
+    print_msg_box("Bit difference: {}".format(count), indent)
 
 
 matrix_1 = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 16]]
@@ -377,4 +386,4 @@ array_2.reverse()
 array_2.remove(24)
 array_1.remove(0)
 
-print_array_bit_diff_column(array_1, array_2, indent=4, column=8)
+print_array_bit_diff_column(array_1, array_2, indent=0, column=8, hex=True)
