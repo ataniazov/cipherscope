@@ -1,5 +1,16 @@
 #!/usr/bin/env python3
 
+"""
+Author: Joao H de A Franco (jhafranco@acm.org)
+
+Description: CLEFIA implementation in Python 3
+
+Date: 2012-02-03
+
+License: Attribution-NonCommercial-ShareAlike 3.0 Unported
+         (CC BY-NC-SA 3.0)
+"""
+
 import sys
 from time import time
 
