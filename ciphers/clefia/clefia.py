@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-
+"""
+https://jhafranco.com/2012/02/02/clefia-implementation-in-python/
+https://jhafranco.com/2012/02/03/clefia-implementation-in-python-improved-version/
+"""
 """
 Author: Joao H de A Franco (jhafranco@acm.org)
 
@@ -11,10 +14,10 @@ License: Attribution-NonCommercial-ShareAlike 3.0 Unported
          (CC BY-NC-SA 3.0)
 """
 
-import sys
-from time import time
 
 # Key sizes supported
+import sys
+from time import time
 ksTable = {"SIZE_128": 16,
            "SIZE_192": 24,
            "SIZE_256": 32}

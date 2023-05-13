@@ -352,7 +352,8 @@ matrix_2 = [[17, 18, 19, 20], [21, 22, 23, 24],
             [25, 26, 27, 28], [29, 30, 31, 32]]
 
 array_1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
-array_2 = [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+array_2 = [240, 241, 242, 243, 244, 245, 246,
+           247, 248, 249, 250, 251, 252, 253, 254, 255]
 
 # array_1 = [0, 1, 2, 3, 4, 5, 6, 7]
 # array_2 = [8, 9, 10, 11, 12, 13, 14, 15]
@@ -382,8 +383,8 @@ print_msg_box("Message Box", indent=4, align=5)
 print("\n")
 
 array_2.insert(14, 32)
-array_2.reverse()
-array_2.remove(24)
+# array_2.reverse()
+array_2.remove(246)
 array_1.remove(0)
 
 print_array_bit_diff_column(array_1, array_2, indent=0, column=8, hex=True)
