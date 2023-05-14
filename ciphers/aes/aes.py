@@ -561,8 +561,8 @@ if __name__ == "__main__":
         # output_file.close()
         exit()
 
-    text = int(sys.argv[2].strip(), 16).to_bytes(16, "big")
-    key = int(sys.argv[3].strip(), 16).to_bytes(16, "big")
+    text = bytes.fromhex(sys.argv[2].strip())
+    key = bytes.fromhex(sys.argv[3].strip())
 
     output_file_name = os.path.splitext(os.path.basename(__file__))[0] + ".txt"
     output_file = open(output_file_name, "w")

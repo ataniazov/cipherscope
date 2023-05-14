@@ -277,10 +277,12 @@ def print_array_bit_diff(array_1, array_2, indent=4):
 
 
 def print_array_bit_diff_column(array_1, array_2, indent=4, column=8, hex=False):
-    assert isinstance(array_1, list), f"\"{array_1}\" is not array!"
+    assert isinstance(array_1, list) or isinstance(
+        array_1, bytes), f"\"{array_1}\" is not array or bytes!"
     length_a1 = len(array_1)
 
-    assert isinstance(array_2, list), f"\"{array_2}\" is not array!"
+    assert isinstance(array_2, list) or isinstance(
+        array_2, bytes), f"\"{array_2}\" is not array or bytes!"
     length_a2 = len(array_2)
 
     assert column > 0, f"column number can not be: {column}"
@@ -388,3 +390,13 @@ array_2.remove(246)
 array_1.remove(0)
 
 print_array_bit_diff_column(array_1, array_2, indent=0, column=8, hex=True)
+
+print("\n")
+
+plaintext = b'ATTACK AT DAWN!\x01'
+# ciphertext = int('7d354e8b1dc429a300abac87c050951a'.strip(),
+#                  16).to_bytes(16, "big")
+ciphertext = bytes.fromhex('7d354e8b1dc429a300abac87c050951a'.strip())
+
+print_array_bit_diff_column(plaintext, ciphertext,
+                            indent=0, column=8, hex=True)
