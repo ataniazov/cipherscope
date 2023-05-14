@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 https://mouha.be/wp-content/uploads/chaskey.py
+https://asecuritysite.com/light/chas2
 """
 """
    Chaskey reference Python implementation, (c) 2014 Bart Mennink
@@ -209,6 +210,8 @@ class chaskey:
 
 
 if __name__ == "__main__":
+    import sys
+
     vectors = [binascii.hexlify(_fourblock.pack(v[3], v[2], v[1], v[0])) for v in [
         (0x792E8FE5, 0x75CE87AA, 0x2D1450B5, 0x1191970B),
         (0x13A9307B, 0x50E62C89, 0x4577BD88, 0xC0BBDC18),
@@ -310,3 +313,29 @@ if __name__ == "__main__":
 
     if doctest.testmod(optionflags=EVAL_FLAG)[0] == 0:
         print("all tests ok")
+
+    k = 'chaskey is a mac'
+    p = 'message part 1'
+
+    if (len(sys.argv) > 1):
+        p = sys.argv[1]
+
+    if (len(sys.argv) > 2):
+        k = (sys.argv[2])
+
+    instance = chaskey(k.encode(), 9, p.encode())
+
+    print("Signature:", instance.hexdigest())
+
+    k = 'chaskey is a mac'
+    p = 'message part 1'
+
+    print("Message: ", p)
+    print("Key: :", k)
+
+    k = k.rjust(16, ' ')  # we need 16 byte for the key - 128 bits
+
+    # 16 byte signature
+    instance = chaskey(k.encode(), 16, p.encode())
+
+    print("Signature:", instance.digest().hex())
