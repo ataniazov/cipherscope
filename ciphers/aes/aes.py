@@ -582,7 +582,7 @@ if __name__ == "__main__":
             "decrypt_block({}, {}):\n{}\n".format(text.hex(), key.hex(), plaintext.hex()))
         print(plaintext.hex(), end="")
     elif "encrypt_ctr".startswith(sys.argv[1]):
-        iv = int(sys.argv[4].strip(), 16).to_bytes(16, "big")
+        iv = bytes.fromhex(sys.argv[4].strip())
         ciphertext = encrypt_ctr(text, key, iv)
         output_file.write(
             "encrypt_ctr({}, {}, {}):\n{}\n\n".format(text, key, iv, ciphertext))
@@ -590,7 +590,7 @@ if __name__ == "__main__":
             "encrypt_ctr({}, {}, {}):\n{}\n".format(text.hex(), key.hex(), iv.hex(), ciphertext.hex()))
         print(ciphertext.hex(), end="")
     elif "decrypt_ctr".startswith(sys.argv[1]):
-        iv = int(sys.argv[4].strip(), 16).to_bytes(16, "big")
+        iv = bytes.fromhex(sys.argv[4].strip())
         plaintext = decrypt_ctr(text, key, iv)
         output_file.write(
             "decrypt_ctr({}, {}, {}):\n{}\n\n".format(text, key, iv, plaintext))
