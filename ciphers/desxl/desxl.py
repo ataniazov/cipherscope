@@ -117,10 +117,12 @@ def encode_block(block, derived_keys, encryption):
 class DESXL(object):
     """A class for encryption using DES Key"""
 
-    def __init__(self, key):
+    def __init__(self, key, pre_whiten_key_1, post_whiten_key_2):
         self.__encryption_key = guard_key(key)
         self.__decryption_key = self.__encryption_key[::-1]
         self.__key = key
+        self.__key_1 = pre_whiten_key_1
+        self.__key_2 = post_whiten_key_2
 
     def encrypt(self, message, initial=None, padding=False):
         """Encrypts the message with the key object.
@@ -160,18 +162,26 @@ class DESXL(object):
         return hash((self.__class__, self.__encryption_key))
 
     def encrypt_block(self, plaintext):
+        plaintext = bytes(pt ^ k1 for pt, k1 in zip(plaintext, self.__key_1))
         blocks = (struct.unpack(">Q", plaintext[i: i + 8])[0]
                   for i in iter_range(0, len(plaintext), 8))
         encoded_blocks = [encode(block, self.__encryption_key, 1)
                           for block in blocks]
-        return b"".join(struct.pack(">Q", block) for block in encoded_blocks)
+        ciphertext = b"".join(struct.pack(">Q", block)
+                              for block in encoded_blocks)
+        ciphertext = bytes(ct ^ k2 for ct, k2 in zip(ciphertext, self.__key_2))
+        return ciphertext
 
     def decrypt_block(self, ciphertext):
+        ciphertext = bytes(ct ^ k2 for ct, k2 in zip(ciphertext, self.__key_2))
         blocks = (struct.unpack(">Q", ciphertext[i: i + 8])[0]
                   for i in iter_range(0, len(ciphertext), 8))
         encoded_blocks = [encode(block, self.__decryption_key, 0)
                           for block in blocks]
-        return b"".join(struct.pack(">Q", block) for block in encoded_blocks)
+        plaintext = b"".join(struct.pack(">Q", block)
+                             for block in encoded_blocks)
+        plaintext = bytes(pt ^ k1 for pt, k1 in zip(plaintext, self.__key_1))
+        return plaintext
 
 
 def encode(block, key, encryption):
@@ -261,6 +271,34 @@ def cbc(blocks, key, initial, encryption):
             initial, block = block, initial ^ encode(block, key, encryption)
             yield block
 
+# def des_x(plaintext, key):
+#     'key must be 24 bytes, plaintext must be multiple of 8 bytes'
+#     pre_whiten  = XOR.new(key[ 8:16]).encrypt #XOR -- encrypt/decrypt are the same
+#     post_whiten = XOR.new(key[16:24]).encrypt
+#     encrypt = DES.new(key[:8], mode=DES.MODE_ECB).encrypt
+#     out = []
+#     prev_xor = XOR.new(iv).encrypt
+#     for i in xrange(len(key)/8):
+#         cur_plain = plaintext[i*8:i*8+8]
+#         cur_cipher = post_whiten(encrypt(pre_whiten(prev_xor(cur_plain))))
+#         out.append(cur_cipher)
+#         prev_xor = XOR.new(cur_cipher).encrypt
+#     return b"".join(out)
+
+# def un_des_x(ciphertext, key, iv='\0'*8):
+#     'key must be 24 bytes, plaintext must be multiple of 8 bytes'
+#     pre_whiten  = XOR.new(key[ 8:16]).decrypt
+#     post_whiten = XOR.new(key[16:24]).decrypt
+#     decrypt = DES.new(key[:8], mode=DES.MODE_ECB).decrypt
+#     out = []
+#     prev_xor = XOR.new(iv).decrypt
+#     for i in xrange(len(ciphertext)/8):
+#         cur_cipher = ciphertext[i*8:i*8+8]
+#         cur_plain = prev_xor(pre_whiten(decrypt(post_whiten(cur_cipher))))
+#         out.append(cur_plain)
+#         prev_xor = XOR.new(cur_cipher).decrypt
+#     return b"".join(out)
+
 
 try:
     bytes.fromhex
@@ -275,10 +313,19 @@ if __name__ == "__main__":
     # key = h2b("0000000000000000".strip())
     # plaintext = h2b("0000000000000000".strip())
 
-    key = h2b("0123456789ABCDEF".strip())
+    # des_key = h2b("0123456789ABCDEF".strip())
+    # plaintext = h2b("0123456789ABCDEF".strip())
+
+    # pre_whiten_key_1 = h2b("FEDCBA9876543210".strip())
+    # post_whiten_key_2 = h2b("0123456789ABCDEF".strip())
+
+    des_key = h2b("0123456789ABCDEF".strip())
     plaintext = h2b("0123456789ABCDEF".strip())
 
-    desxl = DESXL(key)
+    pre_whiten_key_1 = h2b("FEDCBA9876543210".strip())
+    post_whiten_key_2 = h2b("0123456789ABCDEF".strip())
+
+    desxl = DESXL(des_key, pre_whiten_key_1, post_whiten_key_2)
 
     ciphertext = desxl.encrypt_block(plaintext)
 
