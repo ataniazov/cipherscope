@@ -121,73 +121,91 @@ class DESXL(object):
         self.__encryption_key = guard_key(key)
         self.__decryption_key = self.__encryption_key[::-1]
         self.__key = key
-        self.__key_1 = pre_whiten_key_1
-        self.__key_2 = post_whiten_key_2
+        self.__key_1 = int.from_bytes(
+            pre_whiten_key_1, byteorder='big', signed=False)
+        self.__key_2 = int.from_bytes(
+            post_whiten_key_2, byteorder='big', signed=False)
 
-    def encrypt(self, message, initial=None, padding=False):
+    # def encrypt(self, message, initial=None, padding=False):
+    #     """Encrypts the message with the key object.
+
+    #     :param message: {bytes} The message to be encrypted
+    #     :param initial: {union[bytes, int, long, NoneType]} The initial value, using CBC Mode when is not None
+    #     :param padding: {any} Uses PKCS5 Padding when TRUTHY
+    #     :return: {bytes} Encrypted bytes
+    #     """
+    #     return handle(message, self.__encryption_key, initial, padding, 1)
+
+    # def decrypt(self, message, initial=None, padding=False):
+    #     """Decrypts the encrypted message with the key object.
+
+    #     :param message: {bytes} The message to be decrypted
+    #     :param initial: {union[bytes, int, long, NoneType]} The initial value, using CBC Mode when is not None
+    #     :param padding: {any} Uses PKCS5 Padding when TRUTHY
+    #     :return: {bytes} Decrypted bytes
+    #     """
+    #     return handle(message, self.__decryption_key, initial, padding, 0)
+
+    def encrypt(self, message, initial):
         """Encrypts the message with the key object.
 
         :param message: {bytes} The message to be encrypted
         :param initial: {union[bytes, int, long, NoneType]} The initial value, using CBC Mode when is not None
-        :param padding: {any} Uses PKCS5 Padding when TRUTHY
         :return: {bytes} Encrypted bytes
         """
-        return handle(message, self.__encryption_key, initial, padding, 1)
+        return handle_xex(message, self.__encryption_key, self.__key_1, self.__key_2, initial, 1)
 
-    def decrypt(self, message, initial=None, padding=False):
+    def decrypt(self, message, initial):
         """Decrypts the encrypted message with the key object.
 
         :param message: {bytes} The message to be decrypted
         :param initial: {union[bytes, int, long, NoneType]} The initial value, using CBC Mode when is not None
-        :param padding: {any} Uses PKCS5 Padding when TRUTHY
         :return: {bytes} Decrypted bytes
         """
-        return handle(message, self.__decryption_key, initial, padding, 0)
-
-    def is_single(self):
-        """Tells if the key object is using Single-DES algorithm.
-
-        :return: {bool} True if using DES algorithm or False otherwise
-        """
-        return len(self.__encryption_key) == 1
-
-    def is_triple(self):
-        """Tells if the key object is using Triple-DES algorithm.
-
-        :return: {bool} True if using 3DES algorithm or False otherwise
-        """
-        return len(self.__encryption_key) == 3
+        return handle_xex(message, self.__encryption_key, self.__key_1, self.__key_2, initial, 0)
 
     def __hash__(self):
         return hash((self.__class__, self.__encryption_key))
 
-    def encrypt_block(self, plaintext):
-        plaintext = bytes(pt ^ k1 for pt, k1 in zip(plaintext, self.__key_1))
-        blocks = (struct.unpack(">Q", plaintext[i: i + 8])[0]
-                  for i in iter_range(0, len(plaintext), 8))
-        encoded_blocks = [encode(block, self.__encryption_key, 1)
-                          for block in blocks]
-        ciphertext = b"".join(struct.pack(">Q", block)
-                              for block in encoded_blocks)
-        ciphertext = bytes(ct ^ k2 for ct, k2 in zip(ciphertext, self.__key_2))
-        return ciphertext
+    # def encrypt_block(self, plaintext):
+    #     # plaintext = bytes(pt ^ k1 for pt, k1 in zip(plaintext, self.__key_1))
+    #     block = int.from_bytes(plaintext, byteorder='big', signed=False)
+    #     # encoded_block = encode(block, self.__encryption_key, 1) ^ self.__key_2
+    #     encoded_block = encode_xex(
+    #         block, self.__encryption_key, self.__key_1, self.__key_2, 1)
+    #     ciphertext = encoded_block.to_bytes(
+    #         (encoded_block.bit_length() + 7) // 8, byteorder='big', signed=False)
+    #     # return bytes(ct ^ k2 for ct, k2 in zip(ciphertext, self.__key_2))
+    #     return ciphertext
 
-    def decrypt_block(self, ciphertext):
-        ciphertext = bytes(ct ^ k2 for ct, k2 in zip(ciphertext, self.__key_2))
-        blocks = (struct.unpack(">Q", ciphertext[i: i + 8])[0]
-                  for i in iter_range(0, len(ciphertext), 8))
-        encoded_blocks = [encode(block, self.__decryption_key, 0)
-                          for block in blocks]
-        plaintext = b"".join(struct.pack(">Q", block)
-                             for block in encoded_blocks)
-        plaintext = bytes(pt ^ k1 for pt, k1 in zip(plaintext, self.__key_1))
-        return plaintext
+    # def decrypt_block(self, ciphertext):
+    #     # ciphertext = bytes(ct ^ k2 for ct, k2 in zip(ciphertext, self.__key_2))
+    #     block = int.from_bytes(ciphertext, byteorder='big', signed=False)
+    #     # encoded_block = encode(block, self.__decryption_key, 0) ^ self.__key_1
+    #     encoded_block = encode_xex(
+    #         block, self.__decryption_key, self.__key_1, self.__key_2, 0)
+    #     plaintext = encoded_block.to_bytes(
+    #         (encoded_block.bit_length() + 7) // 8, byteorder='big', signed=False)
+    #     # return bytes(pt ^ k1 for pt, k1 in zip(plaintext, self.__key_1))
+    #     return plaintext
 
 
-def encode(block, key, encryption):
+# def encode(block, key, encryption):
+#     for k in key:
+#         block = encode_block(block, k, encryption)
+#         encryption = not encryption
+
+#     return block
+
+
+def encode_xex(block, key, key_1, key_2, encryption):
+    block ^= key_1 if encryption else key_2
+
     for k in key:
         block = encode_block(block, k, encryption)
         encryption = not encryption
+
+    block ^= key_2 if encryption else key_1
 
     return block
 
@@ -210,94 +228,91 @@ def guard_key(key):
     return tuple(tuple(derive_keys(k)) for k in (k0, k1, k2))
 
 
-def guard_message(message, padding, encryption):
-    assert isinstance(message, bytes), "The message should be bytes"
-    length = len(message)
-    if encryption and padding:
-        return message.ljust(length + 8 >> 3 << 3, chr(8 - (length & 7)).encode())
+# def guard_message(message, padding, encryption):
+#     assert isinstance(message, bytes), "The message should be bytes"
+#     length = len(message)
+#     if encryption and padding:
+#         return message.ljust(length + 8 >> 3 << 3, chr(8 - (length & 7)).encode())
 
-    assert length & 7 == 0, (
-        "The length of the message should be divisible by 8"
-        "(or set `padding` to `True` in encryption mode)"
-    )
-    return message
-
-
-def guard_initial(initial):
-    if initial is not None:
-        if isinstance(initial, bytearray):
-            initial = bytes(initial)
-        if isinstance(initial, bytes):
-            assert len(
-                initial) & 7 == 0, "The initial value should be of length 8(as `bytes` or `bytearray`)"
-            return struct.unpack(">Q", initial)[0]
-        assert isinstance(
-            initial, number_type), "The initial value should be an integer or bytes object"
-        assert - \
-            1 < initial < 1 << 32, "The initial value should be in range [0, 2**32) (as an integer)"
-    return initial
+#     assert length & 7 == 0, (
+#         "The length of the message should be divisible by 8"
+#         "(or set `padding` to `True` in encryption mode)"
+#     )
+#     return message
 
 
-def handle(message, key, initial, padding, encryption):
-    message = guard_message(message, padding, encryption)
-    initial = guard_initial(initial)
-
-    blocks = (struct.unpack(">Q", message[i: i + 8])[0]
-              for i in iter_range(0, len(message), 8))
-
-    if initial is None:
-        # ECB
-        encoded_blocks = ecb(blocks, key, encryption)
-    else:
-        # CBC
-        encoded_blocks = cbc(blocks, key, initial, encryption)
-
-    ret = b"".join(struct.pack(">Q", block) for block in encoded_blocks)
-    return ret[:-ord(ret[-1:])] if not encryption and padding else ret
+# def guard_initial(initial):
+#     if initial is not None:
+#         if isinstance(initial, bytearray):
+#             initial = bytes(initial)
+#         if isinstance(initial, bytes):
+#             assert len(
+#                 initial) & 7 == 0, "The initial value should be of length 8(as `bytes` or `bytearray`)"
+#             return struct.unpack(">Q", initial)[0]
+#         assert isinstance(
+#             initial, number_type), "The initial value should be an integer or bytes object"
+#         assert - \
+#             1 < initial < 1 << 32, "The initial value should be in range [0, 2**32) (as an integer)"
+#     return initial
 
 
-def ecb(blocks, key, encryption):
+# def handle(message, key, initial, padding, encryption):
+#     message = guard_message(message, padding, encryption)
+#     initial = guard_initial(initial)
+
+#     blocks = (struct.unpack(">Q", message[i: i + 8])[0]
+#               for i in iter_range(0, len(message), 8))
+
+#     if initial is None:
+#         # ECB
+#         encoded_blocks = ecb(blocks, key, encryption)
+#     else:
+#         # CBC
+#         encoded_blocks = cbc(blocks, key, initial, encryption)
+
+#     ret = b"".join(struct.pack(">Q", block) for block in encoded_blocks)
+#     return ret[:-ord(ret[-1:])] if not encryption and padding else ret
+
+
+# def ecb(blocks, key, encryption):
+#     for block in blocks:
+#         yield encode(block, key, encryption)
+
+
+# def cbc(blocks, key, initial, encryption):
+#     if encryption:
+#         for block in blocks:
+#             initial = encode(block ^ initial, key, encryption)
+#             yield initial
+#     else:
+#         for block in blocks:
+#             initial, block = block, initial ^ encode(block, key, encryption)
+#             yield block
+
+
+# def ctr(blocks, key, initial):
+#     for block in blocks:
+#         block = block ^ encode(initial, key, 1)
+#         initial += 1
+#         yield block
+
+
+def handle_xex(message, key, key_1, key_2, initial, encryption):
+    blocks = [int.from_bytes(message[i:i+8], byteorder='big', signed=False)
+              for i in iter_range(0, len(message), 8)]
+
+    initial = int.from_bytes(initial, byteorder='big', signed=False)
+
+    encoded_blocks = ctr_xex(blocks, key, key_1, key_2, initial)
+
+    return b"".join(encoded_block.to_bytes((encoded_block.bit_length() + 7) // 8, byteorder='big', signed=False) for encoded_block in encoded_blocks)
+
+
+def ctr_xex(blocks, key, key_1, key_2, initial):
     for block in blocks:
-        yield encode(block, key, encryption)
-
-
-def cbc(blocks, key, initial, encryption):
-    if encryption:
-        for block in blocks:
-            initial = encode(block ^ initial, key, encryption)
-            yield initial
-    else:
-        for block in blocks:
-            initial, block = block, initial ^ encode(block, key, encryption)
-            yield block
-
-# def des_x(plaintext, key):
-#     'key must be 24 bytes, plaintext must be multiple of 8 bytes'
-#     pre_whiten  = XOR.new(key[ 8:16]).encrypt #XOR -- encrypt/decrypt are the same
-#     post_whiten = XOR.new(key[16:24]).encrypt
-#     encrypt = DES.new(key[:8], mode=DES.MODE_ECB).encrypt
-#     out = []
-#     prev_xor = XOR.new(iv).encrypt
-#     for i in xrange(len(key)/8):
-#         cur_plain = plaintext[i*8:i*8+8]
-#         cur_cipher = post_whiten(encrypt(pre_whiten(prev_xor(cur_plain))))
-#         out.append(cur_cipher)
-#         prev_xor = XOR.new(cur_cipher).encrypt
-#     return b"".join(out)
-
-# def un_des_x(ciphertext, key, iv='\0'*8):
-#     'key must be 24 bytes, plaintext must be multiple of 8 bytes'
-#     pre_whiten  = XOR.new(key[ 8:16]).decrypt
-#     post_whiten = XOR.new(key[16:24]).decrypt
-#     decrypt = DES.new(key[:8], mode=DES.MODE_ECB).decrypt
-#     out = []
-#     prev_xor = XOR.new(iv).decrypt
-#     for i in xrange(len(ciphertext)/8):
-#         cur_cipher = ciphertext[i*8:i*8+8]
-#         cur_plain = prev_xor(pre_whiten(decrypt(post_whiten(cur_cipher))))
-#         out.append(cur_plain)
-#         prev_xor = XOR.new(cur_cipher).decrypt
-#     return b"".join(out)
+        block = block ^ encode_xex(initial, key, key_1, key_2, 1)
+        initial += 1
+        yield block
 
 
 try:
@@ -319,19 +334,26 @@ if __name__ == "__main__":
     # pre_whiten_key_1 = h2b("FEDCBA9876543210".strip())
     # post_whiten_key_2 = h2b("0123456789ABCDEF".strip())
 
-    des_key = h2b("0123456789ABCDEF".strip())
-    plaintext = h2b("0123456789ABCDEF".strip())
+    # plaintext = h2b("desdesxl".encode("utf-8").hex())
+    # des_key = h2b("0123456789ABCDEF")
 
-    pre_whiten_key_1 = h2b("FEDCBA9876543210".strip())
-    post_whiten_key_2 = h2b("0123456789ABCDEF".strip())
+    # pre_whiten_key_1 = h2b("FEDCBA9876543210".strip())
+    # post_whiten_key_2 = h2b("ABCDEF0123456789".strip())
+
+    plaintext = h2b("0123456789ABCDEF".strip())
+    des_key = h2b("0000000000000000".strip())
+
+    pre_whiten_key_1 = h2b("0000000000000000".strip())
+    post_whiten_key_2 = h2b("0000000000000000".strip())
 
     desxl = DESXL(des_key, pre_whiten_key_1, post_whiten_key_2)
 
-    ciphertext = desxl.encrypt_block(plaintext)
+    initial = h2b("FFFFFFFFFFFFFFFFFFFFFFFF".strip())
+    ciphertext = desxl.encrypt(plaintext, initial)
 
     print("ciphertext: {}".format(ciphertext.hex()))
 
-    decrypted_plaintext = desxl.decrypt_block(ciphertext)
+    decrypted_plaintext = desxl.decrypt(ciphertext, initial)
 
     print("plaintext: {}\ndecrypted_plaintext: {}".format(
         plaintext.hex(), decrypted_plaintext.hex()))
