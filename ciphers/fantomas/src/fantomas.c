@@ -1,14 +1,14 @@
 /*
-* https://github.com/rafajunio/fantomas-x86
-*/
+ * https://github.com/rafajunio/fantomas-x86
+ */
 
 /*
-* ======================================================================
-* Copyright 2016 LG Electronics and  University of Campinas, All Rights 
-* Reserved. The code is licensed persuant to accompanying the GPLv3 free
-* software license.
-* ======================================================================
-*/
+ * ======================================================================
+ * Copyright 2016 LG Electronics and  University of Campinas, All Rights 
+ * Reserved. The code is licensed persuant to accompanying the GPLv3 free
+ * software license.
+ * ======================================================================
+ */
 
 #include "fantomas.h"
 #include <tmmintrin.h> //SSSE3

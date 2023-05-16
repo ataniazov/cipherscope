@@ -1,7 +1,8 @@
 /*
-* https://github.com/gitpan/Crypt-Misty1
-* https://metacpan.org/pod/Crypt::Misty1
-*/
+ * https://github.com/gitpan/Crypt-Misty1
+ * https://metacpan.org/pod/Crypt::Misty1
+ */
+
 /* misty1.c - An implementation of the MISTY1 block cipher, as
  * described in RFC 2994.
  *
