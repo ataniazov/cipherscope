@@ -114,10 +114,10 @@ class CipherScope(customtkinter.CTk):
                                                      image=self.block_image, anchor="w", command=self.block_button_event)
         self.clefia_button.grid(row=4, column=0, sticky="ew")
 
-        self.deslx_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="DESLX",
+        self.desxl_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="DESXL",
                                                     fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
                                                     image=self.block_image, anchor="w", command=self.block_button_event)
-        self.deslx_button.grid(row=5, column=0, sticky="ew")
+        self.desxl_button.grid(row=5, column=0, sticky="ew")
 
         self.fantomas_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="Fantomas",
                                                        fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
@@ -314,7 +314,7 @@ class CipherScope(customtkinter.CTk):
             fg_color=("gray75", "gray25") if name == "block" else "transparent")
         self.clefia_button.configure(
             fg_color=("gray75", "gray25") if name == "block" else "transparent")
-        self.deslx_button.configure(
+        self.desxl_button.configure(
             fg_color=("gray75", "gray25") if name == "block" else "transparent")
         self.fantomas_button.configure(
             fg_color=("gray75", "gray25") if name == "block" else "transparent")
