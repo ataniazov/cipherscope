@@ -240,7 +240,7 @@ class CipherScope(customtkinter.CTk):
             row=0, column=3, padx=(20, 20), pady=(20, 10))
 
         self.cipher_mode_optionmenu = customtkinter.CTkOptionMenu(self.cipher_frame, dynamic_resizing=False, values=[
-                                                                  "Block", "CTR"], command=self.change_cipher_mode_optionmenu_event)
+                                                                  "Block", "ECB", "CTR"], command=self.change_cipher_mode_optionmenu_event)
         self.cipher_mode_optionmenu.grid(
             row=1, column=0, padx=(20, 0), pady=(10, 20))
 
@@ -291,12 +291,12 @@ class CipherScope(customtkinter.CTk):
         # set default values
         self.appearance_mode_optionmenu.set("System")
         self.scaling_optionemenu.set("100%")
-        self.cipher_input_entrymode_button.set("Text")
+        self.cipher_input_entrymode_button.set("Hex")
         self.cipher_transform_optionmenu.set("Encrypt")
         self.cipher_mode_optionmenu.set("Block")
         # self.cipher_iv_entry.configure(placeholder_text="Disabled")
         # self.cipher_iv_entry.configure(state="disabled")
-        self.cipher_output_entrymode_button.set("Text")
+        self.cipher_output_entrymode_button.set("Hex")
 
     def on_close(self, event=0):
         self.destroy()
@@ -411,7 +411,7 @@ class CipherScope(customtkinter.CTk):
                     "insert", bytes.fromhex(key_entry).decode("utf-8"))
 
     def change_cipher_mode_optionmenu_event(self, new_mode_optionmenu: str):
-        if "Block" == new_mode_optionmenu:
+        if "Block" == new_mode_optionmenu or "ECB" == new_mode_optionmenu:
             # self.cipher_iv_entry.delete("0", "end")
             # self.cipher_iv_entry.configure(placeholder_text="Disabled")
             # self.cipher_iv_entry.configure(state="disabled")
@@ -445,7 +445,8 @@ class CipherScope(customtkinter.CTk):
         ciphers_folder = "ciphers/"
         exec_cipher = "aes"
         exec_file = "aes.py"
-        exec_output_file_name = exec_file.split(".")[0] + ".txt"
+        # exec_output_file_name = exec_file.split(".")[0] + ".txt"
+        exec_output_file_name = "output.txt"
 
         cipher_transform = self.cipher_transform_optionmenu.get(
         ).lower() + "_" + self.cipher_mode_optionmenu.get().lower()
@@ -481,7 +482,7 @@ if __name__ == "__main__":
     # customtkinter.set_default_color_theme(os.path.join(os.path.dirname(
     #     os.path.realpath(__file__)), "assets", "themes", "kou-green.json"))
 
-    customtkinter.set_widget_scaling(int(100)/100)
+    customtkinter.set_widget_scaling(int(200)/100)
     # customtkinter.set_window_scaling(int(100)/100)
 
     app = CipherScope()

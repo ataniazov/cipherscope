@@ -55,28 +55,28 @@ inv_s_box = (
 
 
 def sub_bytes(s):
-    output_file.write("sub_bytes()\n")
+    output_file.write("sub_bytes({})\n".format(matrix2bytes(s).hex()))
     for i in range(4):
         for j in range(4):
             s[i][j] = s_box[s[i][j]]
 
 
 def inv_sub_bytes(s):
-    output_file.write("inv_sub_bytes()\n")
+    output_file.write("inv_sub_bytes({})\n".format(matrix2bytes(s).hex()))
     for i in range(4):
         for j in range(4):
             s[i][j] = inv_s_box[s[i][j]]
 
 
 def shift_rows(s):
-    output_file.write("shift_rows()\n")
+    output_file.write("shift_rows({})\n".format(matrix2bytes(s).hex()))
     s[0][1], s[1][1], s[2][1], s[3][1] = s[1][1], s[2][1], s[3][1], s[0][1]
     s[0][2], s[1][2], s[2][2], s[3][2] = s[2][2], s[3][2], s[0][2], s[1][2]
     s[0][3], s[1][3], s[2][3], s[3][3] = s[3][3], s[0][3], s[1][3], s[2][3]
 
 
 def inv_shift_rows(s):
-    output_file.write("inv_shift_rows()\n")
+    output_file.write("inv_shift_rows({})\n".format(matrix2bytes(s).hex()))
     s[0][1], s[1][1], s[2][1], s[3][1] = s[3][1], s[0][1], s[1][1], s[2][1]
     s[0][2], s[1][2], s[2][2], s[3][2] = s[2][2], s[3][2], s[0][2], s[1][2]
     s[0][3], s[1][3], s[2][3], s[3][3] = s[1][3], s[2][3], s[3][3], s[0][3]
@@ -104,13 +104,13 @@ def mix_single_column(a):
 
 
 def mix_columns(s):
-    output_file.write("mix_columns()\n")
+    output_file.write("mix_columns({})\n".format(matrix2bytes(s).hex()))
     for i in range(4):
         mix_single_column(s[i])
 
 
 def inv_mix_columns(s):
-    output_file.write("inv_mix_columns()\n")
+    output_file.write("inv_mix_columns({})\n".format(matrix2bytes(s).hex()))
     # see Sec 4.1.3 in The Design of Rijndael
     for i in range(4):
         u = xtime(xtime(s[i][0] ^ s[i][2]))
@@ -147,6 +147,7 @@ def xor_bytes(a, b):
 
 
 def inc_bytes(a):
+    output_file.write("inc_bytes({})\n".format(a.hex()))
     """ Returns a new byte array with the value increment by 1 """
     out = list(a)
     for i in reversed(range(len(out))):
@@ -158,7 +159,33 @@ def inc_bytes(a):
     return bytes(out)
 
 
+def pad(plaintext):
+    output_file.write("pad({})\n".format(plaintext.hex()))
+    """
+    Pads the given plaintext with PKCS#7 padding to a multiple of 16 bytes.
+    Note that if the plaintext size is a multiple of 16,
+    a whole block will be added.
+    """
+    padding_len = 16 - (len(plaintext) % 16)
+    padding = bytes([padding_len] * padding_len)
+    return plaintext + padding
+
+
+def unpad(plaintext):
+    output_file.write("unpad({})\n".format(plaintext.hex()))
+    """
+    Removes a PKCS#7 padding, returning the unpadded text and ensuring the
+    padding was correct.
+    """
+    padding_len = plaintext[-1]
+    assert padding_len > 0
+    message, padding = plaintext[:-padding_len], plaintext[-padding_len:]
+    assert all(p == padding_len for p in padding)
+    return message
+
+
 def split_blocks(message, block_size=16, require_padding=True):
+    output_file.write("split_blocks({})\n".format(message.hex()))
     assert len(message) % block_size == 0 or not require_padding
     return [message[i:i+16] for i in range(0, len(message), block_size)]
 
@@ -294,6 +321,80 @@ def print_msg_box(msg, indent=0, align=1, width=None, title=None):
     output_file.write(buf)
 
 
+def print_array_bit_diff_column(array_1, array_2, indent=0, column=8, hex=True):
+    assert isinstance(array_1, list) or isinstance(
+        array_1, bytes), f"\"{array_1}\" is not array or bytes!"
+    length_a1 = len(array_1)
+
+    assert isinstance(array_2, list) or isinstance(
+        array_2, bytes), f"\"{array_2}\" is not array or bytes!"
+    length_a2 = len(array_2)
+
+    assert column > 0, f"column number can not be: {column}"
+
+    if length_a1 > length_a2:
+        length_max = length_a1
+        length_min = length_a2
+    else:
+        length_min = length_a1
+        length_max = length_a2
+
+    if length_max == 0:
+        return
+
+    buf = ""
+    count = 0
+
+    for index in range(0, length_max, column):
+        buf += " " * indent
+        buf += ("+--------" + "---" * (1 if hex else 0)) * (column if index+column <=
+                                                            length_max else length_max - index) + "+" * (1 if length_max > 0 else 0) + "\n"
+
+        if index < length_a1:
+            buf += " " * (indent+1)
+            for cell in range(index, (index+column) if (index+column) <= length_a1 else length_a1):
+                if hex:
+                    buf += "{:02X}:".format(array_1[cell])
+                buf += "{:08b} ".format(array_1[cell])
+        buf += "\n"
+
+        if index < length_a2:
+            buf += " " * (indent+1)
+            for cell in range(index, (index+column) if (index+column) <= length_a2 else length_a2):
+                if hex:
+                    buf += "{:02X}:".format(array_2[cell])
+                buf += "{:08b} ".format(array_2[cell])
+        buf += "\n"
+
+        buf += " " * indent
+        buf += ("+--------" + "---" * (1 if hex else 0)) * (column if index+column <=
+                                                            length_max else length_max - index) + "+" * (1 if length_max > 0 else 0) + "\n"
+
+        buf += " " * (indent+1)
+        for cell_index in range(index, (index+column) if (index+column) <= length_max else length_max):
+            diff = (array_1[cell_index] if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
+                array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index])))
+            while diff:
+                count += diff & 1
+                diff >>= 1
+            if hex:
+                buf += "{:02X}:".format(((array_1[cell_index]) if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
+                    array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index]))))
+            buf += "{:08b} ".format(((array_1[cell_index]) if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
+                array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index])))).replace("0", "-").replace("1", "X")
+        buf += "\n"
+
+        buf += " " * indent
+        buf += ("+--------" + "---" * (1 if hex else 0)) * (column if index+column <=
+                                                            length_max else length_max - index) + "+" * (1 if length_max > 0 else 0) + "\n"
+        buf += "\n"
+
+    output_file.write(buf)
+
+    print_msg_box("Bit difference: {}".format(count), indent)
+    output_file.write("\n")
+
+
 class AES:
     """
     Class for AES-128 encryption with CBC mode and PKCS#7.
@@ -392,7 +493,7 @@ class AES:
         output_file.write("\n")
 
         for i in range(1, self.n_rounds):
-            print_msg_box("Round: {:2}".format(i))
+            print_msg_box("Round: {}".format(i))
 
             sub_bytes(plain_state)
             print_matrix_transpose(plain_state)
@@ -428,7 +529,11 @@ class AES:
         # print_matrix_transpose(plain_state)
         output_file.write("\n")
 
-        return matrix2bytes(plain_state)
+        ciphertext = matrix2bytes(plain_state)
+
+        print_array_bit_diff_column(plaintext, ciphertext)
+
+        return ciphertext
 
     def decrypt_block(self, ciphertext):
         """
@@ -461,7 +566,7 @@ class AES:
         output_file.write("\n")
 
         for i in range(self.n_rounds - 1, 0, -1):
-            print_msg_box("Round: {:2}".format(self.n_rounds-i))
+            print_msg_box("Round: {}".format(self.n_rounds-i))
 
             add_round_key(cipher_state, self._key_matrices[i])
             print_2_matrix_transpose(cipher_state, self._key_matrices[i])
@@ -490,7 +595,36 @@ class AES:
         # print_matrix_transpose(cipher_state)
         output_file.write("\n")
 
-        return matrix2bytes(cipher_state)
+        plaintext = matrix2bytes(cipher_state)
+
+        print_array_bit_diff_column(ciphertext, plaintext)
+
+        return plaintext
+
+    def encrypt_ecb(self, plaintext):
+        """
+        Encrypts `plaintext` using ECB mode and PKCS#7 padding.
+        """
+        plaintext = pad(plaintext)
+
+        blocks = []
+        for plaintext_block in split_blocks(plaintext):
+            # ECB mode encrypt: encrypt(plaintext_block)
+            blocks.append(self.encrypt_block(plaintext_block))
+
+        return b''.join(blocks)
+
+    def decrypt_ecb(self, ciphertext):
+        """
+        Decrypts `ciphertext` using ECB mode and PKCS#7 padding.
+        """
+
+        blocks = []
+        for ciphertext_block in split_blocks(ciphertext):
+            # ECB mode decrypt: decrypt(ciphertext)
+            blocks.append(self.decrypt_block(ciphertext_block))
+
+        return unpad(b''.join(blocks))
 
     def encrypt_ctr(self, plaintext, iv):
         """
@@ -502,7 +636,12 @@ class AES:
         nonce = iv
         for plaintext_block in split_blocks(plaintext, require_padding=False):
             # CTR mode encrypt: plaintext_block XOR encrypt(nonce)
-            block = xor_bytes(plaintext_block, self.encrypt_block(nonce))
+            encrypted_nonce = self.encrypt_block(nonce)
+            block = xor_bytes(plaintext_block, encrypted_nonce)
+
+            print_msg_box("Plaintext Block <XOR> Encrypted Nonce")
+            output_file.write("xor_bytes({}, {})\nCiphertext Block: {}\n\n".format(plaintext_block.hex(), encrypted_nonce.hex(), block.hex()))
+
             blocks.append(block)
             nonce = inc_bytes(nonce)
 
@@ -518,7 +657,12 @@ class AES:
         nonce = iv
         for ciphertext_block in split_blocks(ciphertext, require_padding=False):
             # CTR mode decrypt: ciphertext XOR encrypt(nonce)
-            block = xor_bytes(ciphertext_block, self.encrypt_block(nonce))
+            encrypted_nonce = self.encrypt_block(nonce)
+            block = xor_bytes(ciphertext_block, encrypted_nonce)
+
+            print_msg_box("Ciphertext Block <XOR> Encrypted Nonce")
+            output_file.write("xor_bytes({}, {})\nPlaintext Block: {}\n\n".format(ciphertext_block.hex(), encrypted_nonce.hex(), block.hex()))
+
             blocks.append(block)
             nonce = inc_bytes(nonce)
 
@@ -537,6 +681,20 @@ def decrypt_block(ciphertext, key):
     output_file.write("decrypt_block({}, {})\n\n".format(
         ciphertext.hex(), key.hex()))
     return AES(key).decrypt_block(ciphertext)
+
+
+def encrypt_ecb(plaintext, key):
+    output_file.write("encrypt_ecb({}, {})\n".format(plaintext, key))
+    output_file.write("encrypt_ecb({}, {})\n\n".format(
+        plaintext.hex(), key.hex()))
+    return AES(key).encrypt_ecb(plaintext)
+
+
+def decrypt_ecb(ciphertext, key):
+    output_file.write("decrypt_ecb({}, {})\n".format(ciphertext, key))
+    output_file.write("decrypt_ecb({}, {})\n\n".format(
+        ciphertext.hex(), key.hex()))
+    return AES(key).decrypt_ecb(ciphertext)
 
 
 def encrypt_ctr(plaintext, key, iv):
@@ -564,38 +722,59 @@ if __name__ == "__main__":
     text = bytes.fromhex(sys.argv[2].strip())
     key = bytes.fromhex(sys.argv[3].strip())
 
-    output_file_name = os.path.splitext(os.path.basename(__file__))[0] + ".txt"
+    # output_file_name = os.path.splitext(os.path.basename(__file__))[0] + ".txt"
+    output_file_name = "output.txt"
     output_file = open(output_file_name, "w")
 
     if "encrypt_block".startswith(sys.argv[1]):
         ciphertext = encrypt_block(text, key)
         output_file.write(
-            "encrypt_block({}, {}):\n{}\n\n".format(text, key, ciphertext))
+            "encrypt_block({}, {}):\nEncrypted message: {}\n\n".format(text, key, ciphertext))
         output_file.write(
-            "encrypt_block({}, {}):\n{}\n".format(text.hex(), key.hex(), ciphertext.hex()))
+            "encrypt_block({}, {}):\nEncrypted message: {}\n".format(text.hex(), key.hex(), ciphertext.hex()))
+        print_array_bit_diff_column(text, ciphertext)
         print(ciphertext.hex(), end="")
     elif "decrypt_block".startswith(sys.argv[1]):
         plaintext = decrypt_block(text, key)
         output_file.write(
-            "decrypt_block({}, {}):\n{}\n\n".format(text, key, plaintext))
+            "decrypt_block({}, {}):\nDecrypted message: {}\n\n".format(text, key, plaintext))
         output_file.write(
-            "decrypt_block({}, {}):\n{}\n".format(text.hex(), key.hex(), plaintext.hex()))
+            "decrypt_block({}, {}):\nDecrypted message: {}\n".format(text.hex(), key.hex(), plaintext.hex()))
+        print_array_bit_diff_column(text, plaintext)
+        print(plaintext.hex(), end="")
+    elif "encrypt_ecb".startswith(sys.argv[1]):
+        ciphertext = encrypt_ecb(text, key)
+        output_file.write(
+            "encrypt_ecb({}, {}):\nEncrypted message: {}\n\n".format(text, key, ciphertext))
+        output_file.write(
+            "encrypt_ecb({}, {}):\nEncrypted message: {}\n".format(text.hex(), key.hex(), ciphertext.hex()))
+        print_array_bit_diff_column(text, ciphertext)
+        print(ciphertext.hex(), end="")
+    elif "decrypt_ecb".startswith(sys.argv[1]):
+        plaintext = decrypt_ecb(text, key)
+        output_file.write(
+            "decrypt_ecb({}, {}):\nDecrypted message: {}\n\n".format(text, key, plaintext))
+        output_file.write(
+            "decrypt_ecb({}, {}):\nDecrypted message: {}\n".format(text.hex(), key.hex(), plaintext.hex()))
+        print_array_bit_diff_column(text, plaintext)
         print(plaintext.hex(), end="")
     elif "encrypt_ctr".startswith(sys.argv[1]):
         iv = bytes.fromhex(sys.argv[4].strip())
         ciphertext = encrypt_ctr(text, key, iv)
         output_file.write(
-            "encrypt_ctr({}, {}, {}):\n{}\n\n".format(text, key, iv, ciphertext))
+            "encrypt_ctr({}, {}, {}):\nEncrypted message: {}\n\n".format(text, key, iv, ciphertext))
         output_file.write(
-            "encrypt_ctr({}, {}, {}):\n{}\n".format(text.hex(), key.hex(), iv.hex(), ciphertext.hex()))
+            "encrypt_ctr({}, {}, {}):\nEncrypted message: {}\n".format(text.hex(), key.hex(), iv.hex(), ciphertext.hex()))
+        print_array_bit_diff_column(text, ciphertext)
         print(ciphertext.hex(), end="")
     elif "decrypt_ctr".startswith(sys.argv[1]):
         iv = bytes.fromhex(sys.argv[4].strip())
         plaintext = decrypt_ctr(text, key, iv)
         output_file.write(
-            "decrypt_ctr({}, {}, {}):\n{}\n\n".format(text, key, iv, plaintext))
+            "decrypt_ctr({}, {}, {}):\nDecrypted message: {}\n\n".format(text, key, iv, plaintext))
         output_file.write(
-            "decrypt_ctr({}, {}, {}):\n{}\n".format(text.hex(), key.hex(), iv.hex(), plaintext.hex()))
+            "decrypt_ctr({}, {}, {}):\nDecrypted message: {}\n".format(text.hex(), key.hex(), iv.hex(), plaintext.hex()))
+        print_array_bit_diff_column(text, plaintext)
         print(plaintext.hex(), end="")
     output_file.close()
 
@@ -606,3 +785,9 @@ if __name__ == "__main__":
 # python3 aes.py decrypt_block <ciphertext> <key>
 # python3 aes.py decrypt_block 7d354e8b1dc429a300abac87c050951a 534f4d452031323820424954204b4559
 #                                  <ciphertext>                  "SOME 128 BIT KEY"
+
+# python3 aes.py encrypt_ecb 41545441434b204154204441574e2101 534f4d452031323820424954204b4559
+# python3 aes.py decrypt_ecb 7d354e8b1dc429a300abac87c050951a3485873e087a21ed908331410fcb2fe4 534f4d452031323820424954204b4559
+
+# python3 aes.py encrypt_ctr 41545441434b204154204441574e2101 534f4d452031323820424954204b4559 00000000000000000000000000000000
+# python3 aes.py decrypt_ctr f2ff3999c8a82dd91e952d830853ca88 534f4d452031323820424954204b4559 00000000000000000000000000000000
