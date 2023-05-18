@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 def print_matrix(matrix, indent=8):
     assert isinstance(matrix, list), f"\"{matrix}\" is not matrix!"
     rows = len(matrix)
