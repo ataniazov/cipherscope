@@ -411,35 +411,64 @@ class CipherScope(customtkinter.CTk):
         text_input_entry = self.cipher_text_input_entry.get()
         key_input_entry = self.cipher_key_input_entry.get()
         if "Hex" == new_input_entrymode:
-            if text_input_entry:
-                self.cipher_text_input_entry.delete("0", "end")
-                self.cipher_text_input_entry.insert(
-                    "insert", input_entry.encode("utf-8").hex())
-            if key_input_entry:
-                self.cipher_key_input_entry.delete("0", "end")
-                self.cipher_key_input_entry.insert(
-                    "insert", key_entry.encode("utf-8").hex())
+            if "Text" == self.previous_cipher_input_entrymode:
+                if text_input_entry:
+                    self.cipher_text_input_entry.delete("0", "end")
+                    self.cipher_text_input_entry.insert(
+                        "insert", text_input_entry.encode("utf-8").hex())
+                if key_input_entry:
+                    self.cipher_key_input_entry.delete("0", "end")
+                    self.cipher_key_input_entry.insert(
+                        "insert", key_input_entry.encode("utf-8").hex())
+            elif "Bin" == self.previous_cipher_input_entrymode:
+                if text_input_entry:
+                    self.cipher_text_input_entry.delete("0", "end")
+                    self.cipher_text_input_entry.insert(
+                        "insert", hex(int(text_input_entry, 2))[2:])
+                if key_input_entry:
+                    self.cipher_key_input_entry.delete("0", "end")
+                    self.cipher_key_input_entry.insert(
+                        "insert", hex(int(key_input_entry, 2))[2:])
+
         elif "Text" == new_input_entrymode:
-            if text_input_entry:
-                self.cipher_text_input_entry.delete("0", "end")
-                self.cipher_text_input_entry.insert(
-                    "insert", bytes.fromhex(input_entry).decode("utf-8"))
-            if key_input_entry:
-                self.cipher_key_input_entry.delete("0", "end")
-                self.cipher_key_input_entry.insert(
-                    "insert", bytes.fromhex(key_entry).decode("utf-8"))
+            if "Hex" == self.previous_cipher_input_entrymode:
+                if text_input_entry:
+                    self.cipher_text_input_entry.delete("0", "end")
+                    self.cipher_text_input_entry.insert(
+                        "insert", bytes.fromhex(text_input_entry).decode("utf-8"))
+                if key_input_entry:
+                    self.cipher_key_input_entry.delete("0", "end")
+                    self.cipher_key_input_entry.insert(
+                        "insert", bytes.fromhex(key_input_entry).decode("utf-8"))
+            elif "Bin" == self.previous_cipher_input_entrymode:
+                if text_input_entry:
+                    self.cipher_text_input_entry.delete("0", "end")
+                    self.cipher_text_input_entry.insert(
+                        "insert", "".join(chr(int(text_input_entry[i:i+8], 2)) for i in range(0, len(text_input_entry), 8)))
+                if key_input_entry:
+                    self.cipher_key_input_entry.delete("0", "end")
+                    self.cipher_key_input_entry.insert(
+                        "insert", "".join(chr(int(key_input_entry[i:i+8], 2)) for i in range(0, len(key_input_entry), 8)))
         elif "Bin" == new_input_entrymode:
-            if text_input_entry:
-                self.cipher_text_input_entry.delete("0", "end")
-                self.cipher_text_input_entry.insert(
-                    "insert", )
-                # //////////////////////////////////////////
-                " ".join(format(ord(i), "08b") for i in text_str)
-            if key_input_entry:
-                self.cipher_key_input_entry.delete("0", "end")
-                self.cipher_key_input_entry.insert(
-                    "insert", )
-        previous_cipher_input_entrymode = new_input_entrymode
+            if "Text" == self.previous_cipher_input_entrymode:
+                if text_input_entry:
+                    self.cipher_text_input_entry.delete("0", "end")
+                    self.cipher_text_input_entry.insert("insert", "".join(
+                        format(ord(char), "08b") for char in text_input_entry))
+                if key_input_entry:
+                    self.cipher_key_input_entry.delete("0", "end")
+                    self.cipher_key_input_entry.insert("insert", "".join(
+                        format(ord(char), "08b") for char in key_input_entry))
+            elif "Hex" == self.previous_cipher_input_entrymode:
+                if text_input_entry:
+                    self.cipher_text_input_entry.delete("0", "end")
+                    self.cipher_text_input_entry.insert("insert", "".join(
+                        format(int(nibble, 16), '04b') for nibble in text_input_entry))
+                if key_input_entry:
+                    self.cipher_key_input_entry.delete("0", "end")
+                    self.cipher_key_input_entry.insert("insert", "".join(
+                        format(int(nibble, 16), '04b') for nibble in key_input_entry))
+        self.previous_cipher_input_entrymode = new_input_entrymode
 
     def change_cipher_mode_optionmenu_event(self, new_mode_optionmenu: str):
         if "Block" == new_mode_optionmenu or "ECB" == new_mode_optionmenu:
@@ -457,16 +486,34 @@ class CipherScope(customtkinter.CTk):
             self.cipher_iv_input_entry.grid(row=1, column=2, padx=(
                 20, 0), pady=(10, 20), sticky="nsew")
 
+    previous_cipher_output_entrymode = "Hex"
+
     def change_cipher_output_entrymode_button_event(self, new_output_entrymode: str):
-        output_entry = self.cipher_text_output_entry.get()
-        if output_entry:
+        text_output_entry = self.cipher_text_output_entry.get()
+        if text_output_entry:
             self.cipher_text_output_entry.delete("0", "end")
             if "Hex" == new_output_entrymode:
-                self.cipher_text_output_entry.insert(
-                    "insert", output_entry.encode("utf-8").hex())
-            else:
-                self.cipher_text_output_entry.insert(
-                    "insert", bytes.fromhex(output_entry).decode("utf-8"))
+                if "Text" == self.previous_cipher_output_entrymode:
+                    self.cipher_text_output_entry.insert(
+                        "insert", text_output_entry.encode("utf-8").hex())
+                elif "Bin" == self.previous_cipher_output_entrymode:
+                    self.cipher_text_output_entry.insert(
+                        "insert", hex(int(text_output_entry, 2))[2:])
+            elif "Text" == new_output_entrymode:
+                if "Hex" == self.previous_cipher_output_entrymode:
+                    self.cipher_text_output_entry.insert(
+                        "insert", bytes.fromhex(text_output_entry).decode("utf-8"))
+                elif "Bin" == self.previous_cipher_output_entrymode:
+                    self.cipher_text_output_entry.insert(
+                        "insert", "".join(chr(int(text_output_entry[i:i+8], 2)) for i in range(0, len(text_output_entry), 8)))
+            elif "Bin" == new_output_entrymode:
+                if "Text" == self.previous_cipher_output_entrymode:
+                    self.cipher_text_output_entry.insert("insert", "".join(
+                        format(ord(char), "08b") for char in text_output_entry))
+                elif "Hex" == self.previous_cipher_output_entrymode:
+                    self.cipher_text_output_entry.insert("insert", "".join(
+                        format(int(nibble, 16), '04b') for nibble in text_output_entry))
+        self.previous_cipher_output_entrymode = new_output_entrymode
 
     def change_cipher_start_button_event(self):
         if "Hex" != self.cipher_input_entrymode_button.get():
@@ -479,28 +526,32 @@ class CipherScope(customtkinter.CTk):
         # exec_output_file_name = exec_file.split(".")[0] + ".txt"
         exec_output_file_name = "output.txt"
 
-        cipher_transform = self.cipher_transform_optionmenu.get(
-        ).lower() + "_" + self.cipher_mode_optionmenu.get().lower()
+        cipher_transform = self.cipher_transform_optionmenu.get().lower() + "_" + self.cipher_mode_optionmenu.get().lower()
 
+        exec_command = []
         if sys.platform.startswith("win"):
+            exec_command.extend(["python", ciphers_folder + exec_cipher + "\\" + exec_file])
             # exec_stdout = subprocess.check_output(["python", ciphers_folder + exec_cipher + "\\" +
             #                                       exec_file, cipher_transform, self.cipher_text_input_entry.get(), self.cipher_key_input_entry.get()])
-            exec_command = "python", ciphers_folder + exec_cipher + "\\" + \
-                exec_file, cipher_transform, self.cipher_text_input_entry.get(
-                ), self.cipher_key_input_entry.get()
-        else:
+            # exec_command = "python", ciphers_folder + exec_cipher + "\\" + \
+            #     exec_file, cipher_transform, self.cipher_text_input_entry.get(
+            #     ), self.cipher_key_input_entry.get()
             # exec_stdout = subprocess.check_output(
             #     [ciphers_folder + exec_cipher + "/" + exec_file, cipher_transform, self.cipher_text_input_entry.get(), self.cipher_key_input_entry.get()])
-            exec_command = ciphers_folder + exec_cipher + "/" + \
-                exec_file, cipher_transform, self.cipher_text_input_entry.get(
-                ), self.cipher_key_input_entry.get()
+            # exec_command = ciphers_folder + exec_cipher + "/" + \
+            #     exec_file, cipher_transform, self.cipher_text_input_entry.get(
+            #     ), self.cipher_key_input_entry.get()
+        else:
+            exec_command.extend(["python3", ciphers_folder + exec_cipher + "/" + exec_file])
 
-        if cipher_transform == "encrypt_ctr":
-            exec_command += cipher_iv_input_entry.get()
+        exec_command.extend([cipher_transform, self.cipher_text_input_entry.get(), self.cipher_key_input_entry.get()])
+
+        if cipher_transform == "encrypt_ctr" or cipher_transform == "decrypt_ctr":
+            exec_command.append(self.cipher_iv_input_entry.get())
 
         print(exec_command)
 
-        exec_stdout = subprocess.check_output([exec_command])
+        exec_stdout = subprocess.check_output(exec_command)
 
         with open(exec_output_file_name, "r") as exec_output_file:
             exec_output_content = exec_output_file.read()
@@ -514,7 +565,6 @@ class CipherScope(customtkinter.CTk):
         self.cipher_text_output_entry.delete("0", "end")
         self.cipher_output_entrymode_button.set("Hex")
         self.cipher_text_output_entry.insert("insert", exec_stdout)
-        # print(self.cipher_textbox.get("0.0", "insert"))
 
         ##########################
         #  End of Cipher Events  #
@@ -530,7 +580,7 @@ if __name__ == "__main__":
     # customtkinter.set_default_color_theme(os.path.join(os.path.dirname(
     #     os.path.realpath(__file__)), "assets", "themes", "kou-green.json"))
 
-    customtkinter.set_widget_scaling(int(100)/100)
+    customtkinter.set_widget_scaling(int(200)/100)
     # customtkinter.set_window_scaling(int(100)/100)
 
     app = CipherScope()
