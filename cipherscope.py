@@ -101,7 +101,7 @@ class CipherScope(customtkinter.CTk):
 
         self.aes_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="AES",
                                                   fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                  image=self.block_image, anchor="w", command=self.cipher_button_event)
+                                                  image=self.block_image, anchor="w", command=self.aes_button_event)
         self.aes_button.grid(row=2, column=0, sticky="ew")
 
         self.chaskey_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="Chaskey",
@@ -116,7 +116,7 @@ class CipherScope(customtkinter.CTk):
 
         self.desxl_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="DESXL",
                                                     fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                    image=self.block_image, anchor="w", command=self.block_button_event)
+                                                    image=self.block_image, anchor="w", command=self.desxl_button_event)
         self.desxl_button.grid(row=5, column=0, sticky="ew")
 
         self.fantomas_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="Fantomas",
@@ -249,7 +249,7 @@ class CipherScope(customtkinter.CTk):
             row=1, column=0, padx=(20, 0), pady=(10, 20))
 
         self.cipher_key_input_entry = customtkinter.CTkEntry(
-            self.cipher_frame, placeholder_text="Key")
+            self.cipher_frame, placeholder_text="Cipher Key")
         self.cipher_key_input_entry.grid(row=1, column=1, columnspan=2, padx=(
             20, 0), pady=(10, 20), sticky="nsew")
 
@@ -263,6 +263,14 @@ class CipherScope(customtkinter.CTk):
         #     self.cipher_frame, text="Start")
         self.cipher_start_button.grid(row=1, column=3, padx=(
             20, 20), pady=(10, 20), sticky="nsew")
+
+        self.cipher_pre_whitening_input_entry = customtkinter.CTkEntry(
+            self.cipher_frame, placeholder_text="Pre-Whitening Key")
+        # self.cipher_pre_whitening_input_entry.grid(row=2, column=0, padx=(20, 0), pady=(10, 20), sticky="nsew")
+
+        self.cipher_post_whitening_input_entry = customtkinter.CTkEntry(
+            self.cipher_frame, placeholder_text="Post-Whitening Key")
+        # self.cipher_pre_whitening_input_entry.grid(row=2, column=1, padx=(20, 0), pady=(10, 20), sticky="nsew")
 
         self.cipher_output_entrymode_button = customtkinter.CTkSegmentedButton(self.cipher_frame, values=[
                                                                                "Hex", "Text", "Bin"], command=self.change_cipher_output_entrymode_button_event)
@@ -314,18 +322,20 @@ class CipherScope(customtkinter.CTk):
     def start(self):
         self.mainloop()
 
+    cipher = ""
+
     def select_frame_by_name(self, name):
         # set button color for selected button
         self.info_button.configure(
             fg_color=("gray75", "gray25") if name == "info" else "transparent")
         self.aes_button.configure(
-            fg_color=("gray75", "gray25") if name == "cipher" else "transparent")
+            fg_color=("gray75", "gray25") if name == "aes" else "transparent")
         self.chaskey_button.configure(
             fg_color=("gray75", "gray25") if name == "block" else "transparent")
         self.clefia_button.configure(
             fg_color=("gray75", "gray25") if name == "block" else "transparent")
         self.desxl_button.configure(
-            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+            fg_color=("gray75", "gray25") if name == "desxl" else "transparent")
         self.fantomas_button.configure(
             fg_color=("gray75", "gray25") if name == "block" else "transparent")
         self.gost_button.configure(
@@ -358,15 +368,65 @@ class CipherScope(customtkinter.CTk):
             fg_color=("gray75", "gray25") if name == "block" else "transparent")
 
         # show selected frame
-        if name == "info":
+        if "info" == name:
             self.info_frame.grid(row=0, column=1, sticky="nsew")
         else:
             self.info_frame.grid_forget()
-        if name == "cipher":
+
+        if "aes" == name:
+            self.cipher = "aes"
+
+            self.cipher_pre_whitening_input_entry.grid_forget()
+            self.cipher_post_whitening_input_entry.grid_forget()
+
+            self.cipher_frame.grid_rowconfigure(3, weight=0)
+            self.cipher_frame.grid_rowconfigure(2, weight=1)
+
+            self.cipher_mode_optionmenu.grid(pady=(10, 20))
+
+            if "CTR" == self.cipher_mode_optionmenu.get():
+                self.cipher_key_input_entry.grid(columnspan=1, pady=(10, 20))
+                self.cipher_iv_input_entry.grid(pady=(10, 20))
+            else:
+                self.cipher_key_input_entry.grid(columnspan=2, pady=(10, 20))
+
+            self.cipher_start_button.grid(pady=(10, 20))
+
+            self.cipher_textbox.grid(row=2)
+            self.cipher_output_entrymode_button.grid(row=3)
+            self.cipher_text_output_entry.grid(row=3)
+
+            self.cipher_frame.grid(row=0, column=1, sticky="nsew")
+        elif "desxl" == name:
+            self.cipher = "desxl"
+
+            self.cipher_frame.grid_rowconfigure(2, weight=0)
+            self.cipher_frame.grid_rowconfigure(3, weight=1)
+
+            self.cipher_mode_optionmenu.grid(pady=(10, 10))
+
+            if "ctr" == self.cipher_mode_optionmenu.get().lower():
+                self.cipher_key_input_entry.grid(columnspan=1, pady=(10, 10))
+                self.cipher_iv_input_entry.grid(pady=(10, 10))
+            else:
+                self.cipher_key_input_entry.grid(columnspan=2, pady=(10, 10))
+
+            self.cipher_start_button.grid(pady=(10, 10))
+
+            self.cipher_pre_whitening_input_entry.grid(
+                row=2, column=0, columnspan=2, padx=(20, 0), pady=(10, 20), sticky="nsew")
+            self.cipher_post_whitening_input_entry.grid(
+                row=2, column=2, columnspan=2, padx=(20, 20), pady=(10, 20), sticky="nsew")
+
+            self.cipher_textbox.grid(row=3)
+            self.cipher_output_entrymode_button.grid(row=4)
+            self.cipher_text_output_entry.grid(row=4)
+
             self.cipher_frame.grid(row=0, column=1, sticky="nsew")
         else:
             self.cipher_frame.grid_forget()
-        if name == "block":
+
+        if "block" == name:
             self.block_frame.grid(row=0, column=1, sticky="nsew")
         else:
             self.block_frame.grid_forget()
@@ -374,8 +434,11 @@ class CipherScope(customtkinter.CTk):
     def info_button_event(self):
         self.select_frame_by_name("info")
 
-    def cipher_button_event(self):
-        self.select_frame_by_name("cipher")
+    def aes_button_event(self):
+        self.select_frame_by_name("aes")
+
+    def desxl_button_event(self):
+        self.select_frame_by_name("desxl")
 
     def block_button_event(self):
         self.select_frame_by_name("block")
@@ -410,6 +473,14 @@ class CipherScope(customtkinter.CTk):
     def change_cipher_input_entrymode_button_event(self, new_input_entrymode: str):
         text_input_entry = self.cipher_text_input_entry.get()
         key_input_entry = self.cipher_key_input_entry.get()
+
+        # if "desxl" == self.cipher:
+        pre_whitening_input_entry = self.cipher_pre_whitening_input_entry.get()
+        post_whitening_input_entry = self.cipher_post_whitening_input_entry.get()
+        # else:
+        #     pre_whitening_input_entry = ""
+        #     post_whitening_input_entry = ""
+
         if "Hex" == new_input_entrymode:
             if "Text" == self.previous_cipher_input_entrymode:
                 if text_input_entry:
@@ -420,6 +491,14 @@ class CipherScope(customtkinter.CTk):
                     self.cipher_key_input_entry.delete("0", "end")
                     self.cipher_key_input_entry.insert(
                         "insert", key_input_entry.encode("utf-8").hex())
+                if pre_whitening_input_entry:
+                    self.cipher_pre_whitening_input_entry.delete("0", "end")
+                    self.cipher_pre_whitening_input_entry.insert(
+                        "insert", pre_whitening_input_entry.encode("utf-8").hex())
+                if post_whitening_input_entry:
+                    self.cipher_post_whitening_input_entry.delete("0", "end")
+                    self.cipher_post_whitening_input_entry.insert(
+                        "insert", post_whitening_input_entry.encode("utf-8").hex())
             elif "Bin" == self.previous_cipher_input_entrymode:
                 if text_input_entry:
                     self.cipher_text_input_entry.delete("0", "end")
@@ -429,6 +508,14 @@ class CipherScope(customtkinter.CTk):
                     self.cipher_key_input_entry.delete("0", "end")
                     self.cipher_key_input_entry.insert(
                         "insert", hex(int(key_input_entry, 2))[2:])
+                if pre_whitening_input_entry:
+                    self.cipher_pre_whitening_input_entry.delete("0", "end")
+                    self.cipher_pre_whitening_input_entry.insert(
+                        "insert", hex(int(pre_whitening_input_entry, 2))[2:])
+                if post_whitening_input_entry:
+                    self.cipher_post_whitening_input_entry.delete("0", "end")
+                    self.cipher_post_whitening_input_entry.insert(
+                        "insert", hex(int(post_whitening_input_entry, 2))[2:])
 
         elif "Text" == new_input_entrymode:
             if "Hex" == self.previous_cipher_input_entrymode:
@@ -440,6 +527,14 @@ class CipherScope(customtkinter.CTk):
                     self.cipher_key_input_entry.delete("0", "end")
                     self.cipher_key_input_entry.insert(
                         "insert", bytes.fromhex(key_input_entry).decode("utf-8"))
+                if pre_whitening_input_entry:
+                    self.cipher_pre_whitening_input_entry.delete("0", "end")
+                    self.cipher_pre_whitening_input_entry.insert(
+                        "insert", bytes.fromhex(pre_whitening_input_entry).decode("utf-8"))
+                if post_whitening_input_entry:
+                    self.cipher_post_whitening_input_entry.delete("0", "end")
+                    self.cipher_post_whitening_input_entry.insert(
+                        "insert", bytes.fromhex(post_whitening_input_entry).decode("utf-8"))
             elif "Bin" == self.previous_cipher_input_entrymode:
                 if text_input_entry:
                     self.cipher_text_input_entry.delete("0", "end")
@@ -449,6 +544,15 @@ class CipherScope(customtkinter.CTk):
                     self.cipher_key_input_entry.delete("0", "end")
                     self.cipher_key_input_entry.insert(
                         "insert", "".join(chr(int(key_input_entry[i:i+8], 2)) for i in range(0, len(key_input_entry), 8)))
+                if pre_whitening_input_entry:
+                    self.cipher_pre_whitening_input_entry.delete("0", "end")
+                    self.cipher_pre_whitening_input_entry.insert(
+                        "insert", "".join(chr(int(pre_whitening_input_entry[i:i+8], 2)) for i in range(0, len(pre_whitening_input_entry), 8)))
+                if post_whitening_input_entry:
+                    self.cipher_post_whitening_input_entry.delete("0", "end")
+                    self.cipher_post_whitening_input_entry.insert(
+                        "insert", "".join(chr(int(post_whitening_input_entry[i:i+8], 2)) for i in range(0, len(post_whitening_input_entry), 8)))
+
         elif "Bin" == new_input_entrymode:
             if "Text" == self.previous_cipher_input_entrymode:
                 if text_input_entry:
@@ -459,6 +563,14 @@ class CipherScope(customtkinter.CTk):
                     self.cipher_key_input_entry.delete("0", "end")
                     self.cipher_key_input_entry.insert("insert", "".join(
                         format(ord(char), "08b") for char in key_input_entry))
+                if pre_whitening_input_entry:
+                    self.cipher_pre_whitening_input_entry.delete("0", "end")
+                    self.cipher_pre_whitening_input_entry.insert(
+                        "insert", "".join(format(ord(char), "08b") for char in pre_whitening_input_entry))
+                if post_whitening_input_entry:
+                    self.cipher_post_whitening_input_entry.delete("0", "end")
+                    self.cipher_post_whitening_input_entry.insert(
+                        "insert", "".join(format(ord(char), "08b") for char in post_whitening_input_entry))
             elif "Hex" == self.previous_cipher_input_entrymode:
                 if text_input_entry:
                     self.cipher_text_input_entry.delete("0", "end")
@@ -468,6 +580,15 @@ class CipherScope(customtkinter.CTk):
                     self.cipher_key_input_entry.delete("0", "end")
                     self.cipher_key_input_entry.insert("insert", "".join(
                         format(int(nibble, 16), '04b') for nibble in key_input_entry))
+                if pre_whitening_input_entry:
+                    self.cipher_pre_whitening_input_entry.delete("0", "end")
+                    self.cipher_pre_whitening_input_entry.insert(
+                        "insert", "".join(format(int(nibble, 16), '04b') for nibble in pre_whitening_input_entry))
+                if post_whitening_input_entry:
+                    self.cipher_post_whitening_input_entry.delete("0", "end")
+                    self.cipher_post_whitening_input_entry.insert(
+                        "insert", "".join(format(int(nibble, 16), '04b') for nibble in post_whitening_input_entry))
+
         self.previous_cipher_input_entrymode = new_input_entrymode
 
     def change_cipher_mode_optionmenu_event(self, new_mode_optionmenu: str):
@@ -483,8 +604,10 @@ class CipherScope(customtkinter.CTk):
             # self.cipher_iv_input_entry.configure(placeholder_text="Initialization Vector")
             # self.cipher_key_input_entry.grid_forget()
             self.cipher_key_input_entry.grid(columnspan=1)
-            self.cipher_iv_input_entry.grid(row=1, column=2, padx=(
-                20, 0), pady=(10, 20), sticky="nsew")
+
+            row_pady = (10, 10) if "desxl" == self.cipher else (10, 20)
+            self.cipher_iv_input_entry.grid(
+                row=1, column=2, padx=(20, 0), pady=row_pady, sticky="nsew")
 
     previous_cipher_output_entrymode = "Hex"
 
@@ -521,16 +644,18 @@ class CipherScope(customtkinter.CTk):
             self.change_cipher_input_entrymode_button_event("Hex")
 
         ciphers_folder = "ciphers/"
-        exec_cipher = "aes"
-        exec_file = "aes.py"
+        exec_cipher = self.cipher
+        exec_file = exec_cipher + ".py"
         # exec_output_file_name = exec_file.split(".")[0] + ".txt"
         exec_output_file_name = "output.txt"
 
-        cipher_transform = self.cipher_transform_optionmenu.get().lower() + "_" + self.cipher_mode_optionmenu.get().lower()
+        cipher_transform = self.cipher_transform_optionmenu.get(
+        ).lower() + "_" + self.cipher_mode_optionmenu.get().lower()
 
         exec_command = []
         if sys.platform.startswith("win"):
-            exec_command.extend(["python", ciphers_folder + exec_cipher + "\\" + exec_file])
+            exec_command.extend(
+                ["python", ciphers_folder + exec_cipher + "\\" + exec_file])
             # exec_stdout = subprocess.check_output(["python", ciphers_folder + exec_cipher + "\\" +
             #                                       exec_file, cipher_transform, self.cipher_text_input_entry.get(), self.cipher_key_input_entry.get()])
             # exec_command = "python", ciphers_folder + exec_cipher + "\\" + \
@@ -542,14 +667,18 @@ class CipherScope(customtkinter.CTk):
             #     exec_file, cipher_transform, self.cipher_text_input_entry.get(
             #     ), self.cipher_key_input_entry.get()
         else:
-            exec_command.extend(["python3", ciphers_folder + exec_cipher + "/" + exec_file])
+            exec_command.extend(
+                ["python3", ciphers_folder + exec_cipher + "/" + exec_file])
 
-        exec_command.extend([cipher_transform, self.cipher_text_input_entry.get(), self.cipher_key_input_entry.get()])
+        exec_command.extend([cipher_transform, self.cipher_text_input_entry.get(
+        ), self.cipher_key_input_entry.get()])
 
-        if cipher_transform == "encrypt_ctr" or cipher_transform == "decrypt_ctr":
+        if "desxl" == exec_cipher:
+            exec_command.extend([self.cipher_pre_whitening_input_entry.get(
+            ), self.cipher_post_whitening_input_entry.get()])
+
+        if "encrypt_ctr" == cipher_transform or "decrypt_ctr" == cipher_transform:
             exec_command.append(self.cipher_iv_input_entry.get())
-
-        print(exec_command)
 
         exec_stdout = subprocess.check_output(exec_command)
 
