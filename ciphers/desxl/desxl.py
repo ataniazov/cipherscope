@@ -73,10 +73,13 @@ ROTATES = (
 
 
 def rotate_left(i28, k):
+    output_file.write("rotate_left(i28: {}, k: {})\n".format(i28, k))
     return i28 << k & 0x0fffffff | i28 >> 28 - k
 
 
 def permute(data, bits, mapper):
+    output_file.write("permute(data: {}, bits: {})\n".format(
+        integer_to_hex_string(data), bits))
     ret = 0
     for i, v in enumerate(mapper):
         if data & 1 << bits - 1 - v:
@@ -96,6 +99,7 @@ def f(block, key):
 
 
 def derive_keys(key):
+    output_file.write("derive_keys(key: {})\n".format(key.hex()))
     key, = struct.unpack(">Q", key)
     next_key = permute(key, 64, PERMUTED_CHOICE1)
     next_key = next_key >> 28, next_key & 0x0fffffff
@@ -106,38 +110,41 @@ def derive_keys(key):
 
 
 def encode_block(block, derived_keys, encryption):
+    output_file.write("encode_block(block: {})\n".format(
+        integer_to_hex_string(block)))
     block = (block >> 32, block & 0xffffffff)
 
     if not encryption:
         derived_keys = reversed(derived_keys)
     for key in derived_keys:
         block = block[1], block[0] ^ f(block[1], key)
+        output_file.write("block[0]: {} XOR f(block[1]: {}, key: {}))\n".format(
+            integer_to_hex_string(block[0]), integer_to_hex_string(block[1]), integer_to_hex_string(key)))
 
     return (block[1] << 32 | block[0])
 
 
 def pad(plaintext):
-    output_file.write("pad({})\n".format(plaintext.hex()))
     """
     Pads the given plaintext with PKCS#7 padding to a multiple of 16 bytes.
     Note that if the plaintext size is a multiple of 16,
     a whole block will be added.
     """
+    output_file.write("pad({})\n".format(plaintext.hex()))
     padding_len = 8 - (len(plaintext) % 8)
     padding = bytes([padding_len] * padding_len)
     return plaintext + padding
 
 
 def unpad(plaintext):
-    output_file.write("unpad({})\n".format(plaintext.hex()))
     """
     Removes a PKCS#7 padding, returning the unpadded text and ensuring the
     padding was correct.
     """
+    output_file.write("unpad({})\n".format(plaintext.hex()))
     padding_len = plaintext[-1]
     assert padding_len > 0
     message, padding = plaintext[:-padding_len], plaintext[-padding_len:]
-    print(message.hex())
     assert all(p == padding_len for p in padding)
     return message
 
@@ -236,10 +243,16 @@ def print_array_bit_diff_column(array_1, array_2, indent=0, column=8, hex=True):
     output_file.write("\n")
 
 
+def integer_to_hex_string(integer):
+    return (integer.to_bytes((integer.bit_length() + 7) // 8, byteorder='big', signed=False)).hex()
+
+
 class DESXL(object):
     """A class for encryption using DES Key"""
 
     def __init__(self, key, pre_whiten_key_1, post_whiten_key_2):
+        output_file.write("__init__(key: {}, pre_whiten_key_1: {}, post_whiten_key_2: {})\n".format(
+            key.hex(), pre_whiten_key_1.hex(), post_whiten_key_2.hex()))
         self.__encryption_key = guard_key(key)
         self.__decryption_key = self.__encryption_key[::-1]
         self.__key = key
@@ -249,6 +262,8 @@ class DESXL(object):
             post_whiten_key_2, byteorder='big', signed=False)
 
     def encrypt_block(self, plaintext):
+        output_file.write(
+            "encrypt_block(plaintext: {})\n".format(plaintext.hex()))
         # plaintext = bytes(pt ^ k1 for pt, k1 in zip(plaintext, self.__key_1))
         block = int.from_bytes(plaintext, byteorder='big', signed=False)
         # encoded_block = encode(block, self.__encryption_key, 1) ^ self.__key_2
@@ -260,6 +275,8 @@ class DESXL(object):
         return ciphertext
 
     def decrypt_block(self, ciphertext):
+        output_file.write(
+            "decrypt_block(ciphertext: {})\n".format(ciphertext.hex()))
         # ciphertext = bytes(ct ^ k2 for ct, k2 in zip(ciphertext, self.__key_2))
         block = int.from_bytes(ciphertext, byteorder='big', signed=False)
         # encoded_block = encode(block, self.__decryption_key, 0) ^ self.__key_1
@@ -276,6 +293,8 @@ class DESXL(object):
         :param message: {bytes} The message to be encrypted
         :return: {bytes} Encrypted bytes
         """
+        output_file.write("encrypt_ctr(message: {}, initial: {})\n".format(
+            message.hex(), initial.hex()))
         return handle(message, self.__encryption_key, self.__key_1, self.__key_2, initial, encryption=1)
 
     def decrypt_ctr(self, message, initial):
@@ -284,6 +303,8 @@ class DESXL(object):
         :param message: {bytes} The message to be decrypted
         :return: {bytes} Decrypted bytes
         """
+        output_file.write("decrypt_ctr(message: {}, initial: {})\n".format(
+            message.hex(), initial.hex()))
         return handle(message, self.__encryption_key, self.__key_1, self.__key_2, initial, encryption=0)
 
     def encrypt_ecb(self, message):
@@ -292,8 +313,8 @@ class DESXL(object):
         :param message: {bytes} The message to be encrypted
         :return: {bytes} Encrypted bytes
         """
+        output_file.write("encrypt_ecb(message: {})\n".format(message.hex()))
         plaintext = pad(message)
-        print(plaintext.hex())
         return handle(plaintext, self.__encryption_key, self.__key_1, self.__key_2, initial=None, encryption=1)
 
     def decrypt_ecb(self, message):
@@ -302,20 +323,26 @@ class DESXL(object):
         :param message: {bytes} The message to be decrypted
         :return: {bytes} Decrypted bytes
         """
-        print(message.hex())
-        plaintext = handle(message, self.__encryption_key, self.__key_1, self.__key_2, initial=None, encryption=0)
-        print(plaintext.hex())
+        output_file.write("decrypt_ecb(message: {})\n".format(message.hex()))
+        plaintext = handle(message, self.__encryption_key,
+                           self.__key_1, self.__key_2, initial=None, encryption=0)
         return unpad(plaintext)
 
 
 def encode(block, key, key_1, key_2, encryption):
+    output_file.write("encode(block: {}, key_1: {}, key_2: {}, encryption: {})\n".format(
+        integer_to_hex_string(block), integer_to_hex_string(key_1), integer_to_hex_string(key_2), encryption))
     block ^= (key_1 if encryption else key_2)
+    output_file.write("Pre-whitening {}: {} XOR block: {}\n".format(
+        ("key_1" if encryption else "key_2"), (integer_to_hex_string(key_1) if encryption else integer_to_hex_string(key_2)), integer_to_hex_string(block)))
 
     for k in key:
         block = encode_block(block, k, encryption)
         # encryption = not encryption
 
     block ^= (key_2 if encryption else key_1)
+    output_file.write("Post-whitening {}: {} XOR block: {}\n".format(
+        ("key_2" if encryption else "key_1"), (integer_to_hex_string(key_2) if encryption else integer_to_hex_string(key_1)), integer_to_hex_string(block)))
 
     return block
 
@@ -339,7 +366,8 @@ def guard_key(key):
 
 
 def handle(message, key, key_1, key_2, initial, encryption):
-    output_file.write("handle({}, {}, {}, {}, {}, {})\n".format(message.hex(), key, key_1, key_2, initial, encryption))
+    output_file.write("handle({}, {}, {}, {}, {})\n".format(
+        message.hex(), integer_to_hex_string(key_1), integer_to_hex_string(key_2), initial, encryption))
     blocks = [int.from_bytes(message[i:i+8], byteorder="big", signed=False)
               for i in iter_range(0, len(message), 8)]
 
@@ -355,7 +383,8 @@ def handle(message, key, key_1, key_2, initial, encryption):
 
 
 def ctr(blocks, key, key_1, key_2, initial):
-    output_file.write("ctr({}, {}, {}, {}, {})\n".format(blocks, key, key_1, key_2, initial))
+    output_file.write("ctr({}, {}, {})\n".format(
+        integer_to_hex_string(key_1), integer_to_hex_string(key_2), initial))
     for block in blocks:
         block = block ^ encode(initial, key, key_1, key_2, 1)
         initial += 1
@@ -363,7 +392,8 @@ def ctr(blocks, key, key_1, key_2, initial):
 
 
 def ecb(blocks, key, key_1, key_2, encryption):
-    output_file.write("ecb({}, {}, {}, {}, {})\n".format(blocks, key, key_1, key_2, encryption))
+    output_file.write("ecb({}, {}, {})\n".format(
+        integer_to_hex_string(key_1), integer_to_hex_string(key_2), encryption))
     for block in blocks:
         yield encode(block, key, key_1, key_2, encryption)
 
@@ -537,6 +567,9 @@ if __name__ == "__main__":
 
 # python3 desxl.py encrypt_block 0123456789abcdef 0123456789abcdef 0123456789abcdef 0123456789abcdef
 # python3 desxl.py decrypt_block 26e2d9e7e71be11e 0123456789abcdef 0123456789abcdef 0123456789abcdef
+
+# python3 desxl.py encrypt_block 0123456789abcdef 123456789abcdef0 23456789abcdef01 3456789abcdef012
+# python3 desxl.py decrypt_block ec03f93c3ba93817 123456789abcdef0 23456789abcdef01 3456789abcdef012
 
 # python3 desxl.py encrypt_ecb 0123456789abcdef 0123456789abcdef 0123456789abcdef 0123456789abcdef
 # python3 desxl.py decrypt_ecb 26e2d9e7e71be11ed12c59fde93ca4b1 0123456789abcdef 0123456789abcdef 0123456789abcdef
