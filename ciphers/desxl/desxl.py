@@ -6,6 +6,8 @@ https://github.com/ataniazov/cipherscope
 Ata Niyazov
 """
 
+output_file = ""
+
 try:
     import struct
     number_type = int, long
@@ -114,6 +116,126 @@ def encode_block(block, derived_keys, encryption):
     return (block[1] << 32 | block[0])
 
 
+def pad(plaintext):
+    output_file.write("pad({})\n".format(plaintext.hex()))
+    """
+    Pads the given plaintext with PKCS#7 padding to a multiple of 16 bytes.
+    Note that if the plaintext size is a multiple of 16,
+    a whole block will be added.
+    """
+    padding_len = 8 - (len(plaintext) % 8)
+    padding = bytes([padding_len] * padding_len)
+    return plaintext + padding
+
+
+def unpad(plaintext):
+    output_file.write("unpad({})\n".format(plaintext.hex()))
+    """
+    Removes a PKCS#7 padding, returning the unpadded text and ensuring the
+    padding was correct.
+    """
+    padding_len = plaintext[-1]
+    assert padding_len > 0
+    message, padding = plaintext[:-padding_len], plaintext[-padding_len:]
+    print(message.hex())
+    assert all(p == padding_len for p in padding)
+    return message
+
+
+def print_msg_box(msg, indent=0, align=1, width=None, title=None):
+    lines = msg.split("\n")
+    space = " " * align
+
+    if not width:
+        width = max(map(len, lines))
+
+    buf = f"{' ' * indent}+{'-' * (width + align * 2)}+\n"
+
+    if title:
+        buf += f"{' ' * indent}|{space}{title:<{width}}{space}|\n"
+        buf += f"{' ' * indent}|{space}{'-' * len(title):<{width}}{space}|\n"
+
+    buf += "".join([f"{' ' * indent}|{space}{line:<{width}}{space}|\n" for line in lines])
+
+    buf += f"{' ' * indent}+{'-' * (width + align * 2)}+\n"
+
+    output_file.write(buf)
+
+
+def print_array_bit_diff_column(array_1, array_2, indent=0, column=8, hex=True):
+    assert isinstance(array_1, list) or isinstance(
+        array_1, bytes), f"\"{array_1}\" is not array or bytes!"
+    length_a1 = len(array_1)
+
+    assert isinstance(array_2, list) or isinstance(
+        array_2, bytes), f"\"{array_2}\" is not array or bytes!"
+    length_a2 = len(array_2)
+
+    assert column > 0, f"column number can not be: {column}"
+
+    if length_a1 > length_a2:
+        length_max = length_a1
+        length_min = length_a2
+    else:
+        length_min = length_a1
+        length_max = length_a2
+
+    if length_max == 0:
+        return
+
+    buf = ""
+    count = 0
+
+    for index in range(0, length_max, column):
+        buf += " " * indent
+        buf += ("+--------" + "---" * (1 if hex else 0)) * (column if index+column <=
+                                                            length_max else length_max - index) + "+" * (1 if length_max > 0 else 0) + "\n"
+
+        if index < length_a1:
+            buf += " " * (indent+1)
+            for cell in range(index, (index+column) if (index+column) <= length_a1 else length_a1):
+                if hex:
+                    buf += "{:02X}:".format(array_1[cell])
+                buf += "{:08b} ".format(array_1[cell])
+        buf += "\n"
+
+        if index < length_a2:
+            buf += " " * (indent+1)
+            for cell in range(index, (index+column) if (index+column) <= length_a2 else length_a2):
+                if hex:
+                    buf += "{:02X}:".format(array_2[cell])
+                buf += "{:08b} ".format(array_2[cell])
+        buf += "\n"
+
+        buf += " " * indent
+        buf += ("+--------" + "---" * (1 if hex else 0)) * (column if index+column <=
+                                                            length_max else length_max - index) + "+" * (1 if length_max > 0 else 0) + "\n"
+
+        buf += " " * (indent+1)
+        for cell_index in range(index, (index+column) if (index+column) <= length_max else length_max):
+            diff = (array_1[cell_index] if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
+                array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index])))
+            while diff:
+                count += diff & 1
+                diff >>= 1
+            if hex:
+                buf += "{:02X}:".format(((array_1[cell_index]) if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
+                    array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index]))))
+            buf += "{:08b} ".format(((array_1[cell_index]) if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
+                array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index])))).replace("0", "-").replace("1", "X")
+        buf += "\n"
+
+        buf += " " * indent
+        buf += ("+--------" + "---" * (1 if hex else 0)) * (column if index+column <=
+                                                            length_max else length_max - index) + "+" * (1 if length_max > 0 else 0) + "\n"
+        buf += "\n"
+
+    output_file.write(buf)
+
+    print_msg_box("Bit difference: {}".format(count), indent)
+    output_file.write("\n")
+
+
 class DESXL(object):
     """A class for encryption using DES Key"""
 
@@ -126,86 +248,74 @@ class DESXL(object):
         self.__key_2 = int.from_bytes(
             post_whiten_key_2, byteorder='big', signed=False)
 
-    # def encrypt(self, message, initial=None, padding=False):
-    #     """Encrypts the message with the key object.
+    def encrypt_block(self, plaintext):
+        # plaintext = bytes(pt ^ k1 for pt, k1 in zip(plaintext, self.__key_1))
+        block = int.from_bytes(plaintext, byteorder='big', signed=False)
+        # encoded_block = encode(block, self.__encryption_key, 1) ^ self.__key_2
+        encoded_block = encode(
+            block, self.__encryption_key, self.__key_1, self.__key_2, 1)
+        ciphertext = encoded_block.to_bytes(
+            (encoded_block.bit_length() + 7) // 8, byteorder='big', signed=False)
+        # return bytes(ct ^ k2 for ct, k2 in zip(ciphertext, self.__key_2))
+        return ciphertext
 
-    #     :param message: {bytes} The message to be encrypted
-    #     :param initial: {union[bytes, int, long, NoneType]} The initial value, using CBC Mode when is not None
-    #     :param padding: {any} Uses PKCS5 Padding when TRUTHY
-    #     :return: {bytes} Encrypted bytes
-    #     """
-    #     return handle(message, self.__encryption_key, initial, padding, 1)
+    def decrypt_block(self, ciphertext):
+        # ciphertext = bytes(ct ^ k2 for ct, k2 in zip(ciphertext, self.__key_2))
+        block = int.from_bytes(ciphertext, byteorder='big', signed=False)
+        # encoded_block = encode(block, self.__decryption_key, 0) ^ self.__key_1
+        encoded_block = encode(
+            block, self.__decryption_key, self.__key_1, self.__key_2, 0)
+        plaintext = encoded_block.to_bytes(
+            (encoded_block.bit_length() + 7) // 8, byteorder='big', signed=False)
+        # return bytes(pt ^ k1 for pt, k1 in zip(plaintext, self.__key_1))
+        return plaintext
 
-    # def decrypt(self, message, initial=None, padding=False):
-    #     """Decrypts the encrypted message with the key object.
-
-    #     :param message: {bytes} The message to be decrypted
-    #     :param initial: {union[bytes, int, long, NoneType]} The initial value, using CBC Mode when is not None
-    #     :param padding: {any} Uses PKCS5 Padding when TRUTHY
-    #     :return: {bytes} Decrypted bytes
-    #     """
-    #     return handle(message, self.__decryption_key, initial, padding, 0)
-
-    def encrypt(self, message, initial):
+    def encrypt_ctr(self, message, initial):
         """Encrypts the message with the key object.
 
         :param message: {bytes} The message to be encrypted
-        :param initial: {union[bytes, int, long, NoneType]} The initial value, using CBC Mode when is not None
         :return: {bytes} Encrypted bytes
         """
-        return handle_xex(message, self.__encryption_key, self.__key_1, self.__key_2, initial, 1)
+        return handle(message, self.__encryption_key, self.__key_1, self.__key_2, initial, encryption=1)
 
-    def decrypt(self, message, initial):
+    def decrypt_ctr(self, message, initial):
         """Decrypts the encrypted message with the key object.
 
         :param message: {bytes} The message to be decrypted
-        :param initial: {union[bytes, int, long, NoneType]} The initial value, using CBC Mode when is not None
         :return: {bytes} Decrypted bytes
         """
-        return handle_xex(message, self.__encryption_key, self.__key_1, self.__key_2, initial, 0)
+        return handle(message, self.__encryption_key, self.__key_1, self.__key_2, initial, encryption=0)
 
-    def __hash__(self):
-        return hash((self.__class__, self.__encryption_key))
+    def encrypt_ecb(self, message):
+        """Encrypts the message with the key object.
 
-    # def encrypt_block(self, plaintext):
-    #     # plaintext = bytes(pt ^ k1 for pt, k1 in zip(plaintext, self.__key_1))
-    #     block = int.from_bytes(plaintext, byteorder='big', signed=False)
-    #     # encoded_block = encode(block, self.__encryption_key, 1) ^ self.__key_2
-    #     encoded_block = encode_xex(
-    #         block, self.__encryption_key, self.__key_1, self.__key_2, 1)
-    #     ciphertext = encoded_block.to_bytes(
-    #         (encoded_block.bit_length() + 7) // 8, byteorder='big', signed=False)
-    #     # return bytes(ct ^ k2 for ct, k2 in zip(ciphertext, self.__key_2))
-    #     return ciphertext
+        :param message: {bytes} The message to be encrypted
+        :return: {bytes} Encrypted bytes
+        """
+        plaintext = pad(message)
+        print(plaintext.hex())
+        return handle(plaintext, self.__encryption_key, self.__key_1, self.__key_2, initial=None, encryption=1)
 
-    # def decrypt_block(self, ciphertext):
-    #     # ciphertext = bytes(ct ^ k2 for ct, k2 in zip(ciphertext, self.__key_2))
-    #     block = int.from_bytes(ciphertext, byteorder='big', signed=False)
-    #     # encoded_block = encode(block, self.__decryption_key, 0) ^ self.__key_1
-    #     encoded_block = encode_xex(
-    #         block, self.__decryption_key, self.__key_1, self.__key_2, 0)
-    #     plaintext = encoded_block.to_bytes(
-    #         (encoded_block.bit_length() + 7) // 8, byteorder='big', signed=False)
-    #     # return bytes(pt ^ k1 for pt, k1 in zip(plaintext, self.__key_1))
-    #     return plaintext
+    def decrypt_ecb(self, message):
+        """Decrypts the encrypted message with the key object.
+
+        :param message: {bytes} The message to be decrypted
+        :return: {bytes} Decrypted bytes
+        """
+        print(message.hex())
+        plaintext = handle(message, self.__encryption_key, self.__key_1, self.__key_2, initial=None, encryption=0)
+        print(plaintext.hex())
+        return unpad(plaintext)
 
 
-# def encode(block, key, encryption):
-#     for k in key:
-#         block = encode_block(block, k, encryption)
-#         encryption = not encryption
-
-#     return block
-
-
-def encode_xex(block, key, key_1, key_2, encryption):
-    block ^= key_1 if encryption else key_2
+def encode(block, key, key_1, key_2, encryption):
+    block ^= (key_1 if encryption else key_2)
 
     for k in key:
         block = encode_block(block, k, encryption)
-        encryption = not encryption
+        # encryption = not encryption
 
-    block ^= key_2 if encryption else key_1
+    block ^= (key_2 if encryption else key_1)
 
     return block
 
@@ -228,91 +338,34 @@ def guard_key(key):
     return tuple(tuple(derive_keys(k)) for k in (k0, k1, k2))
 
 
-# def guard_message(message, padding, encryption):
-#     assert isinstance(message, bytes), "The message should be bytes"
-#     length = len(message)
-#     if encryption and padding:
-#         return message.ljust(length + 8 >> 3 << 3, chr(8 - (length & 7)).encode())
-
-#     assert length & 7 == 0, (
-#         "The length of the message should be divisible by 8"
-#         "(or set `padding` to `True` in encryption mode)"
-#     )
-#     return message
-
-
-# def guard_initial(initial):
-#     if initial is not None:
-#         if isinstance(initial, bytearray):
-#             initial = bytes(initial)
-#         if isinstance(initial, bytes):
-#             assert len(
-#                 initial) & 7 == 0, "The initial value should be of length 8(as `bytes` or `bytearray`)"
-#             return struct.unpack(">Q", initial)[0]
-#         assert isinstance(
-#             initial, number_type), "The initial value should be an integer or bytes object"
-#         assert - \
-#             1 < initial < 1 << 32, "The initial value should be in range [0, 2**32) (as an integer)"
-#     return initial
-
-
-# def handle(message, key, initial, padding, encryption):
-#     message = guard_message(message, padding, encryption)
-#     initial = guard_initial(initial)
-
-#     blocks = (struct.unpack(">Q", message[i: i + 8])[0]
-#               for i in iter_range(0, len(message), 8))
-
-#     if initial is None:
-#         # ECB
-#         encoded_blocks = ecb(blocks, key, encryption)
-#     else:
-#         # CBC
-#         encoded_blocks = cbc(blocks, key, initial, encryption)
-
-#     ret = b"".join(struct.pack(">Q", block) for block in encoded_blocks)
-#     return ret[:-ord(ret[-1:])] if not encryption and padding else ret
-
-
-# def ecb(blocks, key, encryption):
-#     for block in blocks:
-#         yield encode(block, key, encryption)
-
-
-# def cbc(blocks, key, initial, encryption):
-#     if encryption:
-#         for block in blocks:
-#             initial = encode(block ^ initial, key, encryption)
-#             yield initial
-#     else:
-#         for block in blocks:
-#             initial, block = block, initial ^ encode(block, key, encryption)
-#             yield block
-
-
-# def ctr(blocks, key, initial):
-#     for block in blocks:
-#         block = block ^ encode(initial, key, 1)
-#         initial += 1
-#         yield block
-
-
-def handle_xex(message, key, key_1, key_2, initial, encryption):
-    blocks = [int.from_bytes(message[i:i+8], byteorder='big', signed=False)
+def handle(message, key, key_1, key_2, initial, encryption):
+    output_file.write("handle({}, {}, {}, {}, {}, {})\n".format(message.hex(), key, key_1, key_2, initial, encryption))
+    blocks = [int.from_bytes(message[i:i+8], byteorder="big", signed=False)
               for i in iter_range(0, len(message), 8)]
 
-    initial = int.from_bytes(initial, byteorder='big', signed=False)
-
-    encoded_blocks = ctr_xex(blocks, key, key_1, key_2, initial)
+    if initial is None:
+        # ECB
+        encoded_blocks = ecb(blocks, key, key_1, key_2, encryption)
+    else:
+        # CTR
+        initial = int.from_bytes(initial, byteorder="big", signed=False)
+        encoded_blocks = ctr(blocks, key, key_1, key_2, initial)
 
     return b"".join(encoded_block.to_bytes((encoded_block.bit_length() + 7) // 8, byteorder='big', signed=False) for encoded_block in encoded_blocks)
 
 
-def ctr_xex(blocks, key, key_1, key_2, initial):
+def ctr(blocks, key, key_1, key_2, initial):
+    output_file.write("ctr({}, {}, {}, {}, {})\n".format(blocks, key, key_1, key_2, initial))
     for block in blocks:
-        block = block ^ encode_xex(initial, key, key_1, key_2, 1)
+        block = block ^ encode(initial, key, key_1, key_2, 1)
         initial += 1
         yield block
+
+
+def ecb(blocks, key, key_1, key_2, encryption):
+    output_file.write("ecb({}, {}, {}, {}, {})\n".format(blocks, key, key_1, key_2, encryption))
+    for block in blocks:
+        yield encode(block, key, key_1, key_2, encryption)
 
 
 try:
@@ -324,36 +377,181 @@ else:
     def h2b(byte_string):
         return bytes.fromhex(byte_string)
 
+# if __name__ == "__main__":
+#     # key = h2b("0000000000000000".strip())
+#     # plaintext = h2b("0000000000000000".strip())
+
+#     # des_key = h2b("0123456789ABCDEF".strip())
+#     # plaintext = h2b("0123456789ABCDEF".strip())
+
+#     # pre_whiten_key_1 = h2b("FEDCBA9876543210".strip())
+#     # post_whiten_key_2 = h2b("0123456789ABCDEF".strip())
+
+#     # plaintext = h2b("desdesxl".encode("utf-8").hex())
+#     # des_key = h2b("0123456789ABCDEF")
+
+#     # pre_whiten_key_1 = h2b("FEDCBA9876543210".strip())
+#     # post_whiten_key_2 = h2b("ABCDEF0123456789".strip())
+
+#     plaintext = h2b("0123456789ABCDEF".strip())
+#     des_key = h2b("0000000000000000".strip())
+
+#     pre_whiten_key_1 = h2b("0000000000000000".strip())
+#     post_whiten_key_2 = h2b("0000000000000000".strip())
+
+#     desxl = DESXL(des_key, pre_whiten_key_1, post_whiten_key_2)
+
+#     initial = h2b("FFFFFFFFFFFFFFFFFFFFFFFF".strip())
+#     ciphertext = desxl.encrypt(plaintext, initial)
+
+#     print("ciphertext: {}".format(ciphertext.hex()))
+
+#     decrypted_plaintext = desxl.decrypt(ciphertext, initial)
+
+#     print("plaintext: {}\ndecrypted_plaintext: {}".format(
+#         plaintext.hex(), decrypted_plaintext.hex()))
+
+
+def encrypt_block(plaintext, desl_key, pre_whiten_key_1, post_whiten_key_2):
+    output_file.write("encrypt_block({}, {}, {}, {})\n".format(
+        plaintext, desl_key, pre_whiten_key_1, post_whiten_key_2))
+    output_file.write("encrypt_block({}, {}, {}, {})\n\n".format(
+        plaintext.hex(), desl_key.hex(), pre_whiten_key_1.hex(), post_whiten_key_2.hex()))
+    return DESXL(desl_key, pre_whiten_key_1, post_whiten_key_2).encrypt_block(plaintext)
+
+
+def decrypt_block(ciphertext, desl_key, pre_whiten_key_1, post_whiten_key_2):
+    output_file.write("decrypt_block({}, {}, {}, {})\n".format(
+        ciphertext, desl_key, pre_whiten_key_1, post_whiten_key_2))
+    output_file.write("decrypt_block({}, {}, {}, {})\n\n".format(
+        ciphertext.hex(), desl_key.hex(), pre_whiten_key_1.hex(), post_whiten_key_2.hex()))
+    return DESXL(desl_key, pre_whiten_key_1, post_whiten_key_2).decrypt_block(ciphertext)
+
+
+def encrypt_ecb(plaintext, desl_key, pre_whiten_key_1, post_whiten_key_2):
+    output_file.write("encrypt_ecb({}, {}, {}, {})\n".format(
+        plaintext, desl_key, pre_whiten_key_1, post_whiten_key_2))
+    output_file.write("encrypt_ecb({}, {}, {}, {})\n\n".format(
+        plaintext.hex(), desl_key.hex(), pre_whiten_key_1.hex(), post_whiten_key_2.hex()))
+    return DESXL(desl_key, pre_whiten_key_1, post_whiten_key_2).encrypt_ecb(plaintext)
+
+
+def decrypt_ecb(ciphertext, desl_key, pre_whiten_key_1, post_whiten_key_2):
+    output_file.write("decrypt_ecb({}, {}, {}, {})\n".format(
+        ciphertext, desl_key, pre_whiten_key_1, post_whiten_key_2))
+    output_file.write("decrypt_ecb({}, {}, {}, {})\n\n".format(
+        ciphertext.hex(), desl_key.hex(), pre_whiten_key_1.hex(), post_whiten_key_2.hex()))
+    return DESXL(desl_key, pre_whiten_key_1, post_whiten_key_2).decrypt_ecb(ciphertext)
+
+
+def encrypt_ctr(plaintext, desl_key, pre_whiten_key_1, post_whiten_key_2, iv):
+    output_file.write("encrypt_ctr({}, {}, {}, {})\n".format(
+        plaintext, desl_key, pre_whiten_key_1, post_whiten_key_2, iv))
+    output_file.write("encrypt_ctr({}, {}, {}, {})\n\n".format(
+        plaintext.hex(), desl_key.hex(), pre_whiten_key_1.hex(), post_whiten_key_2.hex(), iv.hex()))
+    return DESXL(desl_key, pre_whiten_key_1, post_whiten_key_2).encrypt_ctr(plaintext, iv)
+
+
+def decrypt_ctr(ciphertext, desl_key, pre_whiten_key_1, post_whiten_key_2, iv):
+    output_file.write("decrypt_block({}, {}, {}, {})\n".format(
+        ciphertext, desl_key, pre_whiten_key_1, post_whiten_key_2, iv))
+    output_file.write("decrypt_block({}, {}, {}, {})\n\n".format(
+        ciphertext.hex(), desl_key.hex(), pre_whiten_key_1.hex(), post_whiten_key_2.hex(), iv.hex()))
+    return DESXL(desl_key, pre_whiten_key_1, post_whiten_key_2).decrypt_ctr(ciphertext, iv)
+
+
 if __name__ == "__main__":
-    # key = h2b("0000000000000000".strip())
-    # plaintext = h2b("0000000000000000".strip())
+    import sys
+    import os
 
-    # des_key = h2b("0123456789ABCDEF".strip())
-    # plaintext = h2b("0123456789ABCDEF".strip())
+    if len(sys.argv) < 3:
+        # output_file.close()
+        exit()
 
-    # pre_whiten_key_1 = h2b("FEDCBA9876543210".strip())
-    # post_whiten_key_2 = h2b("0123456789ABCDEF".strip())
+    text = bytes.fromhex(sys.argv[2].strip())
+    des_key = bytes.fromhex(sys.argv[3].strip())
+    pre_whiten_key_1 = bytes.fromhex(sys.argv[4].strip())
+    post_whiten_key_2 = bytes.fromhex(sys.argv[5].strip())
 
-    # plaintext = h2b("desdesxl".encode("utf-8").hex())
-    # des_key = h2b("0123456789ABCDEF")
+    # output_file_name = os.path.splitext(os.path.basename(__file__))[0] + ".txt"
+    output_file_name = "output.txt"
+    output_file = open(output_file_name, "w")
 
-    # pre_whiten_key_1 = h2b("FEDCBA9876543210".strip())
-    # post_whiten_key_2 = h2b("ABCDEF0123456789".strip())
+    if "encrypt_block".startswith(sys.argv[1]):
+        ciphertext = encrypt_block(
+            text, des_key, pre_whiten_key_1, post_whiten_key_2)
+        output_file.write(
+            "encrypt_block({}, {}, {}, {}):\nEncrypted message: {}\n\n".format(text, des_key, pre_whiten_key_1, post_whiten_key_2, ciphertext))
+        output_file.write(
+            "encrypt_block({}, {}, {}, {}):\nEncrypted message: {}\n".format(text.hex(), des_key.hex(), pre_whiten_key_1.hex(), post_whiten_key_2.hex(), ciphertext.hex()))
+        print_array_bit_diff_column(text, ciphertext)
+        print(ciphertext.hex(), end="")
+    elif "decrypt_block".startswith(sys.argv[1]):
+        plaintext = decrypt_block(
+            text, des_key, pre_whiten_key_1, post_whiten_key_2)
+        output_file.write(
+            "decrypt_block({}, {}, {}, {}):\nDecrypted message: {}\n\n".format(text, des_key, pre_whiten_key_1, post_whiten_key_2, plaintext))
+        output_file.write(
+            "decrypt_block({}, {}, {}, {}):\nDecrypted message: {}\n".format(text.hex(), des_key.hex(), pre_whiten_key_1.hex(), post_whiten_key_2.hex(), plaintext.hex()))
+        print_array_bit_diff_column(text, plaintext)
+        print(plaintext.hex(), end="")
+    elif "encrypt_ecb".startswith(sys.argv[1]):
+        ciphertext = encrypt_ecb(
+            text, des_key, pre_whiten_key_1, post_whiten_key_2)
+        output_file.write(
+            "encrypt_ecb({}, {}, {}, {}):\nEncrypted message: {}\n\n".format(text, des_key, pre_whiten_key_1, post_whiten_key_2, ciphertext))
+        output_file.write(
+            "encrypt_ecb({}, {}, {}, {}):\nEncrypted message: {}\n".format(text.hex(), des_key.hex(), pre_whiten_key_1.hex(), post_whiten_key_2.hex(), ciphertext.hex()))
+        print_array_bit_diff_column(text, ciphertext)
+        print(ciphertext.hex(), end="")
+    elif "decrypt_ecb".startswith(sys.argv[1]):
+        plaintext = decrypt_ecb(
+            text, des_key, pre_whiten_key_1, post_whiten_key_2)
+        output_file.write(
+            "decrypt_ecb({}, {}, {}, {}):\nDecrypted message: {}\n\n".format(text, des_key, pre_whiten_key_1, post_whiten_key_2, plaintext))
+        output_file.write(
+            "decrypt_ecb({}, {}, {}, {}):\nDecrypted message: {}\n".format(text.hex(), des_key.hex(), pre_whiten_key_1.hex(), post_whiten_key_2.hex(), plaintext.hex()))
+        print_array_bit_diff_column(text, plaintext)
+        print(plaintext.hex(), end="")
+    elif "encrypt_ctr".startswith(sys.argv[1]):
+        iv = bytes.fromhex(sys.argv[6].strip())
+        ciphertext = encrypt_ctr(
+            text, des_key, pre_whiten_key_1, post_whiten_key_2, iv)
+        output_file.write(
+            "encrypt_ctr({}, {}, {}, {}, {}):\nEncrypted message: {}\n\n".format(text, des_key, pre_whiten_key_1, post_whiten_key_2, iv, ciphertext))
+        output_file.write(
+            "encrypt_ctr({}, {}, {}, {}, {}):\nEncrypted message: {}\n".format(text.hex(), des_key.hex(), pre_whiten_key_1.hex(), post_whiten_key_2.hex(), iv.hex(), ciphertext.hex()))
+        print_array_bit_diff_column(text, ciphertext)
+        print(ciphertext.hex(), end="")
+    elif "decrypt_ctr".startswith(sys.argv[1]):
+        iv = bytes.fromhex(sys.argv[6].strip())
+        plaintext = decrypt_ctr(
+            text, des_key, pre_whiten_key_1, post_whiten_key_2, iv)
+        output_file.write(
+            "decrypt_ctr({}, {}, {}, {}, {}):\nDecrypted message: {}\n\n".format(text, des_key, pre_whiten_key_1, post_whiten_key_2, iv, plaintext))
+        output_file.write(
+            "decrypt_ctr({}, {}, {}, {}, {}):\nDecrypted message: {}\n".format(text.hex(), des_key.hex(), pre_whiten_key_1.hex(), post_whiten_key_2.hex(), iv.hex(), plaintext.hex()))
+        print_array_bit_diff_column(text, plaintext)
+        print(plaintext.hex(), end="")
+    output_file.close()
 
-    plaintext = h2b("0123456789ABCDEF".strip())
-    des_key = h2b("0000000000000000".strip())
+# python3 desxl.py encrypt_block 0123456789abcdef 0123456789abcdef 0123456789abcdef 0123456789abcdef
+# python3 desxl.py decrypt_block 26e2d9e7e71be11e 0123456789abcdef 0123456789abcdef 0123456789abcdef
 
-    pre_whiten_key_1 = h2b("0000000000000000".strip())
-    post_whiten_key_2 = h2b("0000000000000000".strip())
+# python3 desxl.py encrypt_ecb 0123456789abcdef 0123456789abcdef 0123456789abcdef 0123456789abcdef
+# python3 desxl.py decrypt_ecb 26e2d9e7e71be11ed12c59fde93ca4b1 0123456789abcdef 0123456789abcdef 0123456789abcdef
 
-    desxl = DESXL(des_key, pre_whiten_key_1, post_whiten_key_2)
+# python3 desxl.py encrypt_ecb 0123456789abcdef 123456789abcdef0 23456789abcdef01 3456789abcdef012
+# python3 desxl.py decrypt_ecb ec03f93c3ba9381744a8dcde25258f7e 123456789abcdef0 23456789abcdef01 3456789abcdef012
 
-    initial = h2b("FFFFFFFFFFFFFFFFFFFFFFFF".strip())
-    ciphertext = desxl.encrypt(plaintext, initial)
+# python3 desxl.py encrypt_ecb 0123456789abcdefabcdef9876543210 123456789abcdef0 23456789abcdef01 3456789abcdef012
+# python3 desxl.py decrypt_ecb ec03f93c3ba93817bcbb41eaf5baac9044a8dcde25258f7e 123456789abcdef0 23456789abcdef01 3456789abcdef012
 
-    print("ciphertext: {}".format(ciphertext.hex()))
+# python3 desxl.py encrypt_ctr 0123456789abcdef 0123456789abcdef 0123456789abcdef 0123456789abcdef 0000000000000001
+# python3 desxl.py decrypt_ctr a3e6705c9eb08c28 0123456789abcdef 0123456789abcdef 0123456789abcdef 0000000000000001
 
-    decrypted_plaintext = desxl.decrypt(ciphertext, initial)
+# python3 desxl.py encrypt_ctr 0123456789abcdef 123456789abcdef0 23456789abcdef01 3456789abcdef012 0000000000000001
+# python3 desxl.py decrypt_ctr 77278a987f7bbd71 123456789abcdef0 23456789abcdef01 3456789abcdef012 0000000000000001
 
-    print("plaintext: {}\ndecrypted_plaintext: {}".format(
-        plaintext.hex(), decrypted_plaintext.hex()))
+# python3 desxl.py encrypt_ctr 0123456789abcdefabcdef9876543210 123456789abcdef0 23456789abcdef01 3456789abcdef012 0000000000000001
+# python3 desxl.py decrypt_ctr 77278a987f7bbd71d496a61664262d6b 123456789abcdef0 23456789abcdef01 3456789abcdef012 0000000000000001
