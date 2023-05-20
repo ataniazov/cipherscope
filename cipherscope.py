@@ -147,12 +147,12 @@ class CipherScope(customtkinter.CTk):
 
         self.chaskey_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="Chaskey",
                                                       fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                      image=self.block_image, anchor="w", command=self.block_button_event)
+                                                      image=self.block_image, anchor="w", command=self.chaskey_button_event)
         self.chaskey_button.grid(row=3, column=0, sticky="ew")
 
         self.clefia_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="CLEFIA",
                                                      fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                     image=self.block_image, anchor="w", command=self.block_button_event)
+                                                     image=self.block_image, anchor="w", command=self.clefia_button_event)
         self.clefia_button.grid(row=4, column=0, sticky="ew")
 
         self.desxl_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="DESXL",
@@ -162,77 +162,77 @@ class CipherScope(customtkinter.CTk):
 
         self.fantomas_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="Fantomas",
                                                        fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                       image=self.block_image, anchor="w", command=self.block_button_event)
+                                                       image=self.block_image, anchor="w", command=self.fantomas_button_event)
         self.fantomas_button.grid(row=6, column=0, sticky="ew")
 
         self.gost_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="GOST",
                                                    fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                   image=self.block_image, anchor="w", command=self.block_button_event)
+                                                   image=self.block_image, anchor="w", command=self.gost_button_event)
         self.gost_button.grid(row=7, column=0, sticky="ew")
 
         self.hight_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="HIGHT",
                                                     fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                    image=self.block_image, anchor="w", command=self.block_button_event)
+                                                    image=self.block_image, anchor="w", command=self.hight_button_event)
         self.hight_button.grid(row=8, column=0, sticky="ew")
 
         self.itubee_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="ITUbee",
                                                      fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                     image=self.block_image, anchor="w", command=self.block_button_event)
+                                                     image=self.block_image, anchor="w", command=self.itubee_button_event)
         self.itubee_button.grid(row=9, column=0, sticky="ew")
 
         self.kasumi_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="KASUMI",
                                                      fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                     image=self.block_image, anchor="w", command=self.block_button_event)
+                                                     image=self.block_image, anchor="w", command=self.kasumi_button_event)
         self.kasumi_button.grid(row=10, column=0, sticky="ew")
 
         self.klein_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="KLEIN",
                                                     fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                    image=self.block_image, anchor="w", command=self.block_button_event)
+                                                    image=self.block_image, anchor="w", command=self.klein_button_event)
         self.klein_button.grid(row=11, column=0, sticky="ew")
 
         self.katan_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="KATAN",
                                                     fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                    image=self.block_image, anchor="w", command=self.block_button_event)
+                                                    image=self.block_image, anchor="w", command=self.katan_button_event)
         self.katan_button.grid(row=12, column=0, sticky="ew")
 
         self.ktantan_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="KTANTAN",
                                                       fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                      image=self.block_image, anchor="w", command=self.block_button_event)
+                                                      image=self.block_image, anchor="w", command=self.ktantan_button_event)
         self.ktantan_button.grid(row=13, column=0, sticky="ew")
 
         self.lblock_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="LBlock",
                                                      fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                     image=self.block_image, anchor="w", command=self.block_button_event)
+                                                     image=self.block_image, anchor="w", command=self.lblock_button_event)
         self.lblock_button.grid(row=14, column=0, sticky="ew")
 
         self.lea_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="LEA",
                                                   fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                  image=self.block_image, anchor="w", command=self.block_button_event)
+                                                  image=self.block_image, anchor="w", command=self.lea_button_event)
         self.lea_button.grid(row=15, column=0, sticky="ew")
 
         self.led_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="LED",
                                                   fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                  image=self.block_image, anchor="w", command=self.block_button_event)
+                                                  image=self.block_image, anchor="w", command=self.led_button_event)
         self.led_button.grid(row=16, column=0, sticky="ew")
 
         self.mantis_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="MANTIS",
                                                      fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                     image=self.block_image, anchor="w", command=self.block_button_event)
+                                                     image=self.block_image, anchor="w", command=self.mantis_button_event)
         self.mantis_button.grid(row=17, column=0, sticky="ew")
 
         self.mcrypton_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="mCrypton",
                                                        fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                       image=self.block_image, anchor="w", command=self.block_button_event)
+                                                       image=self.block_image, anchor="w", command=self.mcrypton_button_event)
         self.mcrypton_button.grid(row=18, column=0, sticky="ew")
 
         self.midori_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="Midori",
                                                      fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                     image=self.block_image, anchor="w", command=self.block_button_event)
+                                                     image=self.block_image, anchor="w", command=self.midori_button_event)
         self.midori_button.grid(row=19, column=0, sticky="ew")
 
         self.misty1_button = customtkinter.CTkButton(self.scrollable_frame, corner_radius=0, height=40, border_spacing=10, text="MISTY1",
                                                      fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                     image=self.block_image, anchor="w", command=self.block_button_event)
+                                                     image=self.block_image, anchor="w", command=self.misty1_button_event)
         self.misty1_button.grid(row=20, column=0, sticky="ew")
 
         # create info frame
@@ -378,41 +378,41 @@ class CipherScope(customtkinter.CTk):
         self.aes_button.configure(
             fg_color=("gray75", "gray25") if name == "aes" else "transparent")
         self.chaskey_button.configure(
-            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+            fg_color=("gray75", "gray25") if name == "chaskey" else "transparent")
         self.clefia_button.configure(
-            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+            fg_color=("gray75", "gray25") if name == "clefia" else "transparent")
         self.desxl_button.configure(
             fg_color=("gray75", "gray25") if name == "desxl" else "transparent")
         self.fantomas_button.configure(
-            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+            fg_color=("gray75", "gray25") if name == "fantomas" else "transparent")
         self.gost_button.configure(
-            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+            fg_color=("gray75", "gray25") if name == "gost" else "transparent")
         self.hight_button.configure(
-            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+            fg_color=("gray75", "gray25") if name == "hight" else "transparent")
         self.itubee_button.configure(
-            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+            fg_color=("gray75", "gray25") if name == "itubee" else "transparent")
         self.kasumi_button.configure(
-            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+            fg_color=("gray75", "gray25") if name == "kasumi" else "transparent")
         self.klein_button.configure(
-            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+            fg_color=("gray75", "gray25") if name == "klein" else "transparent")
         self.katan_button.configure(
-            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+            fg_color=("gray75", "gray25") if name == "katan" else "transparent")
         self.ktantan_button.configure(
-            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+            fg_color=("gray75", "gray25") if name == "ktantan" else "transparent")
         self.lblock_button.configure(
-            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+            fg_color=("gray75", "gray25") if name == "lblock" else "transparent")
         self.lea_button.configure(
-            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+            fg_color=("gray75", "gray25") if name == "lea" else "transparent")
         self.led_button.configure(
-            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+            fg_color=("gray75", "gray25") if name == "led" else "transparent")
         self.mantis_button.configure(
-            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+            fg_color=("gray75", "gray25") if name == "mantis" else "transparent")
         self.mcrypton_button.configure(
-            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+            fg_color=("gray75", "gray25") if name == "mcrypton" else "transparent")
         self.midori_button.configure(
-            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+            fg_color=("gray75", "gray25") if name == "midori" else "transparent")
         self.misty1_button.configure(
-            fg_color=("gray75", "gray25") if name == "block" else "transparent")
+            fg_color=("gray75", "gray25") if name == "misty1" else "transparent")
 
         # show selected frame
         if "info" == name:
@@ -484,8 +484,59 @@ class CipherScope(customtkinter.CTk):
     def aes_button_event(self):
         self.select_frame_by_name("aes")
 
+    def chaskey_button_event(self):
+        self.select_frame_by_name("chaskey")
+
+    def clefia_button_event(self):
+        self.select_frame_by_name("clefia")
+
     def desxl_button_event(self):
         self.select_frame_by_name("desxl")
+
+    def fantomas_button_event(self):
+        self.select_frame_by_name("fantomas")
+
+    def gost_button_event(self):
+        self.select_frame_by_name("gost")
+
+    def hight_button_event(self):
+        self.select_frame_by_name("hight")
+
+    def itubee_button_event(self):
+        self.select_frame_by_name("itubee")
+
+    def kasumi_button_event(self):
+        self.select_frame_by_name("kasumi")
+
+    def klein_button_event(self):
+        self.select_frame_by_name("klein")
+
+    def katan_button_event(self):
+        self.select_frame_by_name("katan")
+
+    def ktantan_button_event(self):
+        self.select_frame_by_name("ktantan")
+
+    def lblock_button_event(self):
+        self.select_frame_by_name("lblock")
+
+    def lea_button_event(self):
+        self.select_frame_by_name("lea")
+
+    def led_button_event(self):
+        self.select_frame_by_name("led")
+
+    def mantis_button_event(self):
+        self.select_frame_by_name("mantis")
+
+    def mcrypton_button_event(self):
+        self.select_frame_by_name("mcrypton")
+
+    def midori_button_event(self):
+        self.select_frame_by_name("midori")
+
+    def misty1_button_event(self):
+        self.select_frame_by_name("misty1")
 
     def block_button_event(self):
         self.select_frame_by_name("block")
