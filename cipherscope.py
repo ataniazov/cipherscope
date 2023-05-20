@@ -7,8 +7,8 @@ import subprocess
 from PIL import Image
 
 
-class MessageWindow(customtkinter.CTkToplevel):
-    WINDOW_NAME = "Message Window"
+class MessageBox(customtkinter.CTkToplevel):
+    WINDOW_NAME = "Message Box"
     WIDTH = 500
     HEIGHT = 200
 
@@ -20,7 +20,7 @@ class MessageWindow(customtkinter.CTkToplevel):
 
         self.geometry(f"{self.WIDTH}x{self.HEIGHT}")
         self.minsize(self.WIDTH, self.HEIGHT)
-        self.resizable(False, False)
+        self.resizable(width=False, height=False)
 
         self.protocol("WM_DELETE_WINDOW", self.on_close)
         self.bind("<Control-q>", self.on_close)
@@ -63,7 +63,7 @@ class CipherScope(customtkinter.CTk):
 
         self.geometry(f"{self.WIDTH}x{self.HEIGHT}")
         self.minsize(self.WIDTH, self.HEIGHT)
-        # self.resizable(False, False)
+        # self.resizable(width=False, height=False)
 
         self.protocol("WM_DELETE_WINDOW", self.on_close)
         self.bind("<Control-q>", self.on_close)
@@ -71,7 +71,7 @@ class CipherScope(customtkinter.CTk):
         # self.createcommand("tk::mac::Quit", self.on_close)
 
         # Message top level window
-        self.message_window = None
+        self.messagebox = None
 
         # set grid layout 1x2
         self.grid_rowconfigure(0, weight=1)
@@ -363,11 +363,11 @@ class CipherScope(customtkinter.CTk):
     def start(self):
         self.mainloop()
 
-    def open_message_window(self, message: str):
-        if self.message_window is None or not self.message_window.winfo_exists():
-            self.message_window = MessageWindow(self).setMessage(message)
+    def open_messagebox(self, message: str):
+        if self.messagebox is None or not self.messagebox.winfo_exists():
+            self.messagebox = MessageBox(self).setMessage(message)
         else:
-            self.message_window.focus()
+            self.messagebox.focus()
 
     cipher = ""
 
@@ -756,7 +756,7 @@ if __name__ == "__main__":
     # customtkinter.set_default_color_theme(os.path.join(os.path.dirname(
     #     os.path.realpath(__file__)), "assets", "themes", "kou-green.json"))
 
-    customtkinter.set_widget_scaling(int(200)/100)
+    customtkinter.set_widget_scaling(int(100)/100)
     # customtkinter.set_window_scaling(int(100)/100)
 
     app = CipherScope()
