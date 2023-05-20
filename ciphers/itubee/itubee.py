@@ -152,3 +152,58 @@ class ITUbeeTexts():
             decrypted_plain_text += self.decrypt(enc2, key)
 
         return decrypted_plain_text.decode('hex').rstrip(' \t\r\n\0')
+
+
+if __name__ == "__main__":
+    itubee = ITUbee()
+
+    # First test
+    plain_text = '01000000000000000000'
+    key = '00000000000000000080'
+
+    enc = itubee.encrypt(plain_text, key)
+    print(enc)
+
+    dec = itubee.decrypt(enc, key)
+    print(dec)
+
+    # 2 test
+    plain_text = '00000000000000000000'
+    key = '00000000000000000000'
+
+    enc = itubee.encrypt(plain_text, key)
+    print(enc)
+
+    dec = itubee.decrypt(enc, key)
+    print(dec)
+
+    # 3 test
+    plain_text = '6925278951fbf3b25ccc'
+    key = 'c538bd9289822be43363'
+
+    enc = itubee.encrypt(plain_text, key)
+    print(enc)
+
+    dec = itubee.decrypt(enc, key)
+    print(dec)
+
+    # 4 test
+    plain_text = '6925288A51fCf3b25ccc'
+    key = '6925288A51fCf3b25ccc'
+
+    enc = itubee.encrypt(plain_text, key)
+    print(enc)
+
+    dec = itubee.decrypt(enc, key)
+    print(dec)
+
+    itubee = ITUbeeTexts()
+
+    key2 = '00000000000000000080'
+    plain_text2 = 'Andrey Rocks'
+
+    enc2 = itubee.encrypt_text(plain_text2, key2)
+    dec2 = itubee.decrypt_text(enc2, key2)
+    print(enc2)
+    print(dec2)
+    print(dec2 == plain_text2)
