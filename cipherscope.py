@@ -7,6 +7,44 @@ import subprocess
 from PIL import Image
 
 
+class MessageWindow(customtkinter.CTkToplevel):
+    WINDOW_NAME = "Message Window"
+    WIDTH = 500
+    HEIGHT = 200
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # configure window
+        self.title(self.WINDOW_NAME)
+
+        self.geometry(f"{self.WIDTH}x{self.HEIGHT}")
+        self.minsize(self.WIDTH, self.HEIGHT)
+        self.resizable(False, False)
+
+        self.protocol("WM_DELETE_WINDOW", self.on_close)
+        self.bind("<Control-q>", self.on_close)
+        self.bind("<Control-w>", self.on_close)
+        # self.createcommand("tk::mac::Quit", self.on_close)
+
+        # set grid layout 1x2
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+
+        self.button = customtkinter.CTkButton(
+            self, text="OK", command=self.on_close)
+        self.button.grid(row=1, column=0, padx=(
+            80, 80), pady=(10, 20), sticky="nsew")
+
+    def on_close(self, event=0):
+        self.destroy()
+
+    def setMessage(self, message: str):
+        self.label = customtkinter.CTkLabel(self, text=message)
+        self.label.grid(row=0, column=0, padx=(20, 20),
+                        pady=(20, 10), sticky="nsew")
+
+
 class CipherScope(customtkinter.CTk):
     APP_NAME = "CipherScope"
     WIDTH = 1280
@@ -31,6 +69,9 @@ class CipherScope(customtkinter.CTk):
         self.bind("<Control-q>", self.on_close)
         self.bind("<Control-w>", self.on_close)
         # self.createcommand("tk::mac::Quit", self.on_close)
+
+        # Message top level window
+        self.message_window = None
 
         # set grid layout 1x2
         self.grid_rowconfigure(0, weight=1)
@@ -321,6 +362,12 @@ class CipherScope(customtkinter.CTk):
 
     def start(self):
         self.mainloop()
+
+    def open_message_window(self, message: str):
+        if self.message_window is None or not self.message_window.winfo_exists():
+            self.message_window = MessageWindow(self).setMessage(message)
+        else:
+            self.message_window.focus()
 
     cipher = ""
 
