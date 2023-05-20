@@ -507,6 +507,8 @@ if __name__ == "__main__":
     output_file_name = "output.txt"
     output_file = open(output_file_name, "w")
 
+    output_file.write("DESXL\n\n")
+
     if "encrypt_block".startswith(sys.argv[1]):
         ciphertext = encrypt_block(
             text, des_key, pre_whiten_key_1, post_whiten_key_2)

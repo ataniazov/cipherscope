@@ -640,7 +640,8 @@ class AES:
             block = xor_bytes(plaintext_block, encrypted_nonce)
 
             print_msg_box("Plaintext Block <XOR> Encrypted Nonce")
-            output_file.write("xor_bytes({}, {})\nCiphertext Block: {}\n\n".format(plaintext_block.hex(), encrypted_nonce.hex(), block.hex()))
+            output_file.write("xor_bytes({}, {})\nCiphertext Block: {}\n\n".format(
+                plaintext_block.hex(), encrypted_nonce.hex(), block.hex()))
 
             blocks.append(block)
             nonce = inc_bytes(nonce)
@@ -661,7 +662,8 @@ class AES:
             block = xor_bytes(ciphertext_block, encrypted_nonce)
 
             print_msg_box("Ciphertext Block <XOR> Encrypted Nonce")
-            output_file.write("xor_bytes({}, {})\nPlaintext Block: {}\n\n".format(ciphertext_block.hex(), encrypted_nonce.hex(), block.hex()))
+            output_file.write("xor_bytes({}, {})\nPlaintext Block: {}\n\n".format(
+                ciphertext_block.hex(), encrypted_nonce.hex(), block.hex()))
 
             blocks.append(block)
             nonce = inc_bytes(nonce)
@@ -725,6 +727,8 @@ if __name__ == "__main__":
     # output_file_name = os.path.splitext(os.path.basename(__file__))[0] + ".txt"
     output_file_name = "output.txt"
     output_file = open(output_file_name, "w")
+
+    output_file.write("AES\n\n")
 
     if "encrypt_block".startswith(sys.argv[1]):
         ciphertext = encrypt_block(text, key)
