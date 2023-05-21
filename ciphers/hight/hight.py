@@ -240,46 +240,102 @@ def cbc_hight_decryption(C, IV, MK):
     return D
 
 
-# if __name__ == "__main__":
-#     # ECB TEST CASE
-#     MK = [0x88, 0xE3, 0x4F, 0x8F, 0x08, 0x17, 0x79, 0xF1,
-#           0xE9, 0xF3, 0x94, 0x37, 0x0A, 0xD4, 0x05, 0x89]
-#     P = [0xD7, 0x6D, 0x0D, 0x18, 0x32, 0x7E, 0xC5, 0x62]
-#     expected_C = [0xE4, 0xBC, 0x2E, 0x31, 0x22, 0x77, 0xE4, 0xDD]
+def ctr_hight_encryption(P, IV, MK):
+    assert not len(P) % 8 and P
+    assert all(0 <= byte <= 0xFF for byte in P)
+    assert len(IV) == 8
+    assert all(0 <= byte <= 0xFF for byte in IV)
+    assert len(MK) == 16
+    assert all(0 <= byte <= 0xFF for byte in MK)
 
-#     # MAIN CODE
-#     print("Plaintext:", [hex(byte)[2:].upper() for byte in P])
+    WK, SK = encryption_key_schedule(MK)
+    C = [P_i ^ CIV_i for P_i, CIV_i in zip(
+        P[:8], encryption_transformation(IV, WK, SK))]
+    for block in range(8, len(P), 8):
+        C += [P_i ^ CIV_i for P_i, CIV_i in zip(
+            P[block:block + 8], encryption_transformation(IV[block:block + 8], WK, SK))]
+    return C
 
-#     C = ecb_hight_encryption(P, MK)
 
-#     print("Encrypted bytes:", [hex(byte)[2:].upper() for byte in C])
+def ctr_hight_decryption(C, IV, MK):
+    assert not len(C) % 8 and C
+    assert all(0 <= byte <= 0xFF for byte in C)
+    assert len(IV) == 8
+    assert all(0 <= byte <= 0xFF for byte in IV)
+    assert len(MK) == 16
+    assert all(0 <= byte <= 0xFF for byte in MK)
 
-#     assert C == expected_C
+    WK, SK = encryption_key_schedule(MK)
+    D = [C_i ^ CIV_i for C_i, CIV_i in zip(
+        C[:8], encryption_transformation(IV, WK, SK))]
+    for block in range(8, len(C), 8):
+        D += [C_i ^ CIV_i for C_i, CIV_i in zip(
+            C[block:block + 8], encryption_transformation(IV[block:block + 8], WK, SK))]
+    return D
 
-#     D = ecb_hight_decryption(C, MK)
 
-#     print("Decrypted bytes:", [hex(byte)[2:].upper() for byte in D])
+if __name__ == "__main__":
+    # ECB TEST CASE
+    MK = [0x88, 0xE3, 0x4F, 0x8F, 0x08, 0x17, 0x79, 0xF1,
+          0xE9, 0xF3, 0x94, 0x37, 0x0A, 0xD4, 0x05, 0x89]
+    P = [0xD7, 0x6D, 0x0D, 0x18, 0x32, 0x7E, 0xC5, 0x62]
+    expected_C = [0xE4, 0xBC, 0x2E, 0x31, 0x22, 0x77, 0xE4, 0xDD]
 
-#     assert D == P
+    # MAIN CODE
+    print("Plaintext:", [hex(byte)[2:].upper() for byte in P])
 
-#     # CBC TEST CASE
-#     MK = [0x88, 0xE3, 0x4F, 0x8F, 0x08, 0x17, 0x79, 0xF1,
-#           0xE9, 0xF3, 0x94, 0x37, 0x0A, 0xD4, 0x05, 0x89]
-#     IV = [0x26, 0x8D, 0x66, 0xA7, 0x35, 0xA8, 0x1A, 0x81]
-#     P = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]
-#     expected_C = [0xCE, 0x15, 0x95, 0x08, 0x5A, 0x18, 0x8C, 0x28]
+    C = ecb_hight_encryption(P, MK)
 
-#     # MAIN CODE
-#     print("Plaintext:", [hex(byte)[2:].upper() for byte in P])
+    print("Encrypted bytes:", [hex(byte)[2:].upper() for byte in C])
 
-#     C = cbc_hight_encryption(P, IV, MK)
+    assert C == expected_C
 
-#     print("Encrypted bytes:", [hex(byte)[2:].upper() for byte in C])
+    D = ecb_hight_decryption(C, MK)
 
-#     assert C == expected_C
+    print("Decrypted bytes:", [hex(byte)[2:].upper() for byte in D])
 
-#     D = cbc_hight_decryption(C, IV, MK)
+    assert D == P
 
-#     print("Decrypted bytes:", [hex(byte)[2:].upper() for byte in D])
+    # CBC TEST CASE
+    MK = [0x88, 0xE3, 0x4F, 0x8F, 0x08, 0x17, 0x79, 0xF1,
+          0xE9, 0xF3, 0x94, 0x37, 0x0A, 0xD4, 0x05, 0x89]
+    IV = [0x26, 0x8D, 0x66, 0xA7, 0x35, 0xA8, 0x1A, 0x81]
+    P = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]
+    expected_C = [0xCE, 0x15, 0x95, 0x08, 0x5A, 0x18, 0x8C, 0x28]
 
-#     assert D == P
+    # MAIN CODE
+    print("Plaintext:", [hex(byte)[2:].upper() for byte in P])
+
+    C = cbc_hight_encryption(P, IV, MK)
+
+    print("Encrypted bytes:", [hex(byte)[2:].upper() for byte in C])
+
+    assert C == expected_C
+
+    D = cbc_hight_decryption(C, IV, MK)
+
+    print("Decrypted bytes:", [hex(byte)[2:].upper() for byte in D])
+
+    assert D == P
+
+    # CTR TEST CASE
+    MK = [0x88, 0xE3, 0x4F, 0x8F, 0x08, 0x17, 0x79, 0xF1,
+          0xE9, 0xF3, 0x94, 0x37, 0x0A, 0xD4, 0x05, 0x89]
+    IV = [0x26, 0x8D, 0x66, 0xA7, 0x35, 0xA8, 0x1A, 0x81]
+    P = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]
+    # expected_C = [0xCE, 0x15, 0x95, 0x08, 0x5A, 0x18, 0x8C, 0x28]
+
+    # MAIN CODE
+    print("Plaintext:", [hex(byte)[2:].upper() for byte in P])
+
+    C = ctr_hight_encryption(P, IV, MK)
+
+    print("Encrypted bytes:", [hex(byte)[2:].upper() for byte in C])
+
+    # assert C == expected_C
+
+    D = ctr_hight_decryption(C, IV, MK)
+
+    print("Decrypted bytes:", [hex(byte)[2:].upper() for byte in D])
+
+    assert D == P
