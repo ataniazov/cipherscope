@@ -202,6 +202,24 @@ class ITUbee():
         return b''.join(blocks)
 
 
+def xor_bytes(a, b):
+    """ Returns a new byte array with the elements xor'ed. """
+    return bytes(i ^ j for i, j in zip(a, b))
+
+
+def inc_bytes(a):
+    """ Returns a new byte array with the value increment by 1 """
+    output_file.write("inc_bytes({})\n".format(a.hex()))
+    out = list(a)
+    for i in reversed(range(len(out))):
+        if out[i] == 0xFF:
+            out[i] = 0
+        else:
+            out[i] += 1
+            break
+    return bytes(out)
+
+
 def pad(plaintext):
     """
     Pads the given plaintext with PKCS#7 padding to a multiple of 10 bytes.

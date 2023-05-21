@@ -566,6 +566,30 @@ class CipherScope(customtkinter.CTk):
             self.cipher_text_output_entry.grid(row=3)
 
             self.cipher_frame.grid(row=0, column=1, sticky="nsew")
+        elif "midori" == name:
+            self.cipher = name
+
+            self.cipher_pre_whitening_input_entry.grid_forget()
+            self.cipher_post_whitening_input_entry.grid_forget()
+
+            self.cipher_frame.grid_rowconfigure(3, weight=0)
+            self.cipher_frame.grid_rowconfigure(2, weight=1)
+
+            self.cipher_mode_optionmenu.grid(pady=(10, 20))
+
+            if "CTR" == self.cipher_mode_optionmenu.get():
+                self.cipher_key_input_entry.grid(columnspan=1, pady=(10, 20))
+                self.cipher_iv_input_entry.grid(pady=(10, 20))
+            else:
+                self.cipher_key_input_entry.grid(columnspan=2, pady=(10, 20))
+
+            self.cipher_start_button.grid(pady=(10, 20))
+
+            self.cipher_textbox.grid(row=2)
+            self.cipher_output_entrymode_button.grid(row=3)
+            self.cipher_text_output_entry.grid(row=3)
+
+            self.cipher_frame.grid(row=0, column=1, sticky="nsew")
         else:
             self.cipher_frame.grid_forget()
 
@@ -903,7 +927,7 @@ if __name__ == "__main__":
     # customtkinter.set_default_color_theme(os.path.join(os.path.dirname(
     #     os.path.realpath(__file__)), "assets", "themes", "kou-green.json"))
 
-    customtkinter.set_widget_scaling(int(100)/100)
+    customtkinter.set_widget_scaling(int(200)/100)
     # customtkinter.set_window_scaling(int(100)/100)
 
     app = CipherScope()

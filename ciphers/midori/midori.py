@@ -163,12 +163,8 @@ def White_Key(key, base):
         return WK
 
 
-def encrypt(msg, key, base):
-    state = [[0]*4 for i in range(4)]
-    for i in range(16):
-        r = i//4
-        c = i % 4
-        state[r][c] = ord(msg[i])
+def encrypt(plaintext, key, base):
+    state = hex_to_matrix(plaintext)
     WK = White_Key(key, base)
     KeyAdd(state, WK)
     t_round = 16
@@ -181,10 +177,11 @@ def encrypt(msg, key, base):
         KeyAdd(state,  round_key_generation(base, key, round))
     sbox(state, base)
     KeyAdd(state, WK)
-    return state
+    return matrix_to_hex(state)
 
 
-def decrypt(state, key, base):
+def decrypt(ciphertext, key, base):
+    state = hex_to_matrix(ciphertext)
     WK = White_Key(key, base)
     KeyAdd(state, WK)
     t_round = 16
@@ -200,34 +197,355 @@ def decrypt(state, key, base):
         KeyAdd(state, RKi)
     sbox(state, base)
     KeyAdd(state, WK)
-    return state
+    return matrix_to_hex(state)
+
+
+def hex_to_matrix(hex_string):
+    # Remove any whitespace characters from the string
+    hex_string = hex_string.replace(" ", "")
+    # Convert the hexadecimal string to a list of 16 integers
+    hex_list = [int(hex_string[i:i+2], 16)
+                for i in range(0, len(hex_string), 2)]
+    # Create a 4x4 matrix from the list
+    matrix = [hex_list[i:i+4] for i in range(0, len(hex_list), 4)]
+    return matrix
+
+
+def matrix_to_hex(matrix):
+    # Flatten the matrix into a single list
+    flat_list = [item for sublist in matrix for item in sublist]
+
+    # Convert the integers to hexadecimal strings
+    hex_list = [format(num, '02x') for num in flat_list]
+
+    # Join the hexadecimal strings to form the final string
+    return ''.join(hex_list)
+
+
+def print_msg_box(msg, indent=0, align=1, width=None, title=None):
+    lines = msg.split("\n")
+    space = " " * align
+
+    if not width:
+        width = max(map(len, lines))
+
+    buf = f"{' ' * indent}+{'-' * (width + align * 2)}+\n"
+
+    if title:
+        buf += f"{' ' * indent}|{space}{title:<{width}}{space}|\n"
+        buf += f"{' ' * indent}|{space}{'-' * len(title):<{width}}{space}|\n"
+
+    buf += "".join([f"{' ' * indent}|{space}{line:<{width}}{space}|\n" for line in lines])
+
+    buf += f"{' ' * indent}+{'-' * (width + align * 2)}+\n"
+
+    output_file.write(buf)
+
+
+def print_array_bit_diff_column(array_1, array_2, indent=0, column=8, hex=True):
+    assert isinstance(array_1, list) or isinstance(
+        array_1, bytes), f"\"{array_1}\" is not array or bytes!"
+    length_a1 = len(array_1)
+
+    assert isinstance(array_2, list) or isinstance(
+        array_2, bytes), f"\"{array_2}\" is not array or bytes!"
+    length_a2 = len(array_2)
+
+    assert column > 0, f"column number can not be: {column}"
+
+    if length_a1 > length_a2:
+        length_max = length_a1
+        length_min = length_a2
+    else:
+        length_min = length_a1
+        length_max = length_a2
+
+    if length_max == 0:
+        return
+
+    buf = ""
+    count = 0
+
+    for index in range(0, length_max, column):
+        buf += " " * indent
+        buf += ("+--------" + "---" * (1 if hex else 0)) * (column if index+column <=
+                                                            length_max else length_max - index) + "+" * (1 if length_max > 0 else 0) + "\n"
+
+        if index < length_a1:
+            buf += " " * (indent+1)
+            for cell in range(index, (index+column) if (index+column) <= length_a1 else length_a1):
+                if hex:
+                    buf += "{:02X}:".format(array_1[cell])
+                buf += "{:08b} ".format(array_1[cell])
+        buf += "\n"
+
+        if index < length_a2:
+            buf += " " * (indent+1)
+            for cell in range(index, (index+column) if (index+column) <= length_a2 else length_a2):
+                if hex:
+                    buf += "{:02X}:".format(array_2[cell])
+                buf += "{:08b} ".format(array_2[cell])
+        buf += "\n"
+
+        buf += " " * indent
+        buf += ("+--------" + "---" * (1 if hex else 0)) * (column if index+column <=
+                                                            length_max else length_max - index) + "+" * (1 if length_max > 0 else 0) + "\n"
+
+        buf += " " * (indent+1)
+        for cell_index in range(index, (index+column) if (index+column) <= length_max else length_max):
+            diff = (array_1[cell_index] if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
+                array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index])))
+            while diff:
+                count += diff & 1
+                diff >>= 1
+            if hex:
+                buf += "{:02X}:".format(((array_1[cell_index]) if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
+                    array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index]))))
+            buf += "{:08b} ".format(((array_1[cell_index]) if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
+                array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index])))).replace("0", "-").replace("1", "X")
+        buf += "\n"
+
+        buf += " " * indent
+        buf += ("+--------" + "---" * (1 if hex else 0)) * (column if index+column <=
+                                                            length_max else length_max - index) + "+" * (1 if length_max > 0 else 0) + "\n"
+        buf += "\n"
+
+    output_file.write(buf)
+
+    print_msg_box("Bit difference: {}".format(count), indent)
+    output_file.write("\n")
+
+
+def xor_bytes(a, b):
+    """ Returns a new byte array with the elements xor'ed. """
+    return bytes(i ^ j for i, j in zip(a, b))
+
+
+def inc_bytes(a):
+    """ Returns a new byte array with the value increment by 1 """
+    output_file.write("inc_bytes({})\n".format(a.hex()))
+    out = list(a)
+    for i in reversed(range(len(out))):
+        if out[i] == 0xFF:
+            out[i] = 0
+        else:
+            out[i] += 1
+            break
+    return bytes(out)
+
+
+def pad(plaintext):
+    """
+    Pads the given plaintext with PKCS#7 padding to a multiple of 16 bytes.
+    Note that if the plaintext size is a multiple of 16,
+    a whole block will be added.
+    """
+    output_file.write("pad({})\n".format(plaintext.hex()))
+    padding_len = 16 - (len(plaintext) % 16)
+    padding = bytes([padding_len] * padding_len)
+    return plaintext + padding
+
+
+def unpad(plaintext):
+    """
+    Removes a PKCS#7 padding, returning the unpadded text and ensuring the
+    padding was correct.
+    """
+    output_file.write("unpad({})\n".format(plaintext.hex()))
+    padding_len = plaintext[-1]
+    assert padding_len > 0
+    message, padding = plaintext[:-padding_len], plaintext[-padding_len:]
+    assert all(p == padding_len for p in padding)
+    return message
+
+
+def split_blocks(message, block_size=16, require_padding=True):
+    output_file.write("split_blocks({})\n".format(message.hex()))
+    assert len(message) % block_size == 0 or not require_padding
+    return [message[i:i+block_size] for i in range(0, len(message), block_size)]
+
+
+def encrypt_block(plaintext, key):
+    output_file.write("encrypt_block({}, {})\n".format(plaintext, key))
+    output_file.write("encrypt_block({}, {})\n\n".format(
+        plaintext.hex(), key.hex()))
+    return bytes.fromhex(encrypt(plaintext.hex(), key.hex(), 128))
+
+
+def decrypt_block(ciphertext, key):
+    output_file.write("decrypt_block({}, {})\n".format(ciphertext, key))
+    output_file.write("decrypt_block({}, {})\n\n".format(
+        ciphertext.hex(), key.hex()))
+    return bytes.fromhex(decrypt(ciphertext.hex(), key.hex(), 128))
+
+
+def encrypt_ecb(plaintext, key):
+    """
+    Encrypts `plaintext` using ECB mode and PKCS#7 padding.
+    """
+    output_file.write("encrypt_ecb({}, {})\n".format(plaintext, key))
+    output_file.write("encrypt_ecb({}, {})\n\n".format(
+        plaintext.hex(), key.hex()))
+
+    plaintext = pad(plaintext)
+
+    blocks = []
+    for plaintext_block in split_blocks(plaintext):
+        # ECB mode encrypt: encrypt(plaintext_block, key)
+        blocks.append(encrypt_block(plaintext_block, key))
+
+    return b''.join(blocks)
+
+
+def decrypt_ecb(ciphertext, key):
+    """
+    Decrypts `ciphertext` using ECB mode and PKCS#7 padding.
+    """
+    output_file.write("decrypt_ecb({}, {})\n".format(ciphertext, key))
+    output_file.write("decrypt_ecb({}, {})\n\n".format(
+        ciphertext.hex(), key.hex()))
+
+    blocks = []
+    for ciphertext_block in split_blocks(ciphertext):
+        # ECB mode decrypt: decrypt(ciphertext_block, key)
+        blocks.append(decrypt_block(ciphertext_block, key))
+
+    return unpad(b''.join(blocks))
+
+
+def encrypt_ctr(plaintext, key, iv):
+    """
+    Encrypts `plaintext` using CTR mode with the given nounce/IV.
+    """
+    output_file.write("encrypt_ctr({}, {}, {})\n".format(plaintext, key, iv))
+    output_file.write("encrypt_ctr({}, {}, {})\n\n".format(
+        plaintext.hex(), key.hex(), iv.hex()))
+
+    assert len(iv) == 16
+
+    blocks = []
+    nonce = iv
+    for plaintext_block in split_blocks(plaintext, require_padding=False):
+        # CTR mode encrypt: plaintext_block XOR encrypt(nonce)
+        encrypted_nonce = encrypt_block(nonce, key)
+        block = xor_bytes(plaintext_block, encrypted_nonce)
+
+        print_msg_box("Plaintext Block <XOR> Encrypted Nonce")
+        output_file.write("xor_bytes({}, {})\nCiphertext Block: {}\n\n".format(
+            plaintext_block.hex(), encrypted_nonce.hex(), block.hex()))
+
+        blocks.append(block)
+        nonce = inc_bytes(nonce)
+
+    return b''.join(blocks)
+
+
+def decrypt_ctr(ciphertext, key, iv):
+    """
+    Decrypts `ciphertext` using CTR mode with the given nounce/IV.
+    """
+    output_file.write("decrypt_ctr({}, {}, {})\n".format(ciphertext, key, iv))
+    output_file.write("decrypt_ctr({}, {}, {})\n\n".format(
+        ciphertext.hex(), key.hex(), iv.hex()))
+
+    assert len(iv) == 16
+
+    blocks = []
+    nonce = iv
+    for ciphertext_block in split_blocks(ciphertext, require_padding=False):
+        # CTR mode decrypt: ciphertext XOR encrypt(nonce)
+        encrypted_nonce = encrypt_block(nonce, key)
+        block = xor_bytes(ciphertext_block, encrypted_nonce)
+
+        print_msg_box("Ciphertext Block <XOR> Encrypted Nonce")
+        output_file.write("xor_bytes({}, {})\nPlaintext Block: {}\n\n".format(
+            ciphertext_block.hex(), encrypted_nonce.hex(), block.hex()))
+
+        blocks.append(block)
+        nonce = inc_bytes(nonce)
+
+    return b''.join(blocks)
 
 
 if __name__ == "__main__":
-    import random
+    import sys
+    import os
 
-    def print_stmt(code, state):
-        if code == 0:
-            digest = "0x"
-            for i in range(4):
-                for j in range(4):
-                    digest += hex(state[i][j])[2:]
-            print("Encrypted Text: ", digest)
-        else:
-            text = ""
-            for i in range(4):
-                for j in range(4):
-                    text += chr(state[i][j])
-            print("Decrypted Text: ", text)
+    if len(sys.argv) < 3:
+        # output_file.close()
+        exit()
 
-    hash = random.getrandbits(128)
-    key = hex(hash)
+    text = bytes.fromhex(sys.argv[2].strip())
+    key = bytes.fromhex(sys.argv[3].strip())
 
-    msg = input("Enter message (max 16 characters) :")
-    print("Key Generated: ", key)
-    msg = msg.ljust(16, '0')
+    # output_file_name = os.path.splitext(os.path.basename(__file__))[0] + ".txt"
+    output_file_name = "output.txt"
+    output_file = open(output_file_name, "w")
 
-    state = encrypt(msg, key, 128)
-    print_stmt(0, state)
-    state = decrypt(state, key, 128)
-    print_stmt(1, state)
+    output_file.write("Midori\n\n")
+
+    if "encrypt_block".startswith(sys.argv[1]):
+        ciphertext = encrypt_block(text, key)
+        output_file.write(
+            "encrypt_block({}, {}):\nEncrypted message: {}\n\n".format(text, key, ciphertext))
+        output_file.write(
+            "encrypt_block({}, {}):\nEncrypted message: {}\n".format(text.hex(), key.hex(), ciphertext.hex()))
+        print_array_bit_diff_column(text, ciphertext)
+        print(ciphertext.hex(), end="")
+    elif "decrypt_block".startswith(sys.argv[1]):
+        plaintext = decrypt_block(text, key)
+        output_file.write(
+            "decrypt_block({}, {}):\nDecrypted message: {}\n\n".format(text, key, plaintext))
+        output_file.write(
+            "decrypt_block({}, {}):\nDecrypted message: {}\n".format(text.hex(), key.hex(), plaintext.hex()))
+        print_array_bit_diff_column(text, plaintext)
+        print(plaintext.hex(), end="")
+    elif "encrypt_ecb".startswith(sys.argv[1]):
+        ciphertext = encrypt_ecb(text, key)
+        output_file.write(
+            "encrypt_ecb({}, {}):\nEncrypted message: {}\n\n".format(text, key, ciphertext))
+        output_file.write(
+            "encrypt_ecb({}, {}):\nEncrypted message: {}\n".format(text.hex(), key.hex(), ciphertext.hex()))
+        print_array_bit_diff_column(text, ciphertext)
+        print(ciphertext.hex(), end="")
+    elif "decrypt_ecb".startswith(sys.argv[1]):
+        plaintext = decrypt_ecb(text, key)
+        output_file.write(
+            "decrypt_ecb({}, {}):\nDecrypted message: {}\n\n".format(text, key, plaintext))
+        output_file.write(
+            "decrypt_ecb({}, {}):\nDecrypted message: {}\n".format(text.hex(), key.hex(), plaintext.hex()))
+        print_array_bit_diff_column(text, plaintext)
+        print(plaintext.hex(), end="")
+    elif "encrypt_ctr".startswith(sys.argv[1]):
+        iv = bytes.fromhex(sys.argv[4].strip())
+        ciphertext = encrypt_ctr(text, key, iv)
+        output_file.write(
+            "encrypt_ctr({}, {}, {}):\nEncrypted message: {}\n\n".format(text, key, iv, ciphertext))
+        output_file.write(
+            "encrypt_ctr({}, {}, {}):\nEncrypted message: {}\n".format(text.hex(), key.hex(), iv.hex(), ciphertext.hex()))
+        print_array_bit_diff_column(text, ciphertext)
+        print(ciphertext.hex(), end="")
+    elif "decrypt_ctr".startswith(sys.argv[1]):
+        iv = bytes.fromhex(sys.argv[4].strip())
+        plaintext = decrypt_ctr(text, key, iv)
+        output_file.write(
+            "decrypt_ctr({}, {}, {}):\nDecrypted message: {}\n\n".format(text, key, iv, plaintext))
+        output_file.write(
+            "decrypt_ctr({}, {}, {}):\nDecrypted message: {}\n".format(text.hex(), key.hex(), iv.hex(), plaintext.hex()))
+        print_array_bit_diff_column(text, plaintext)
+        print(plaintext.hex(), end="")
+    output_file.close()
+
+# python3 midori.py encrypt_block <plaintext> <key>
+# python3 midori.py encrypt_block 41545441434b204154204441574e2101 534f4d452031323820424954204b4559
+#                                     "ATTACK AT DAWN!\x01"             "SOME 128 BIT KEY"
+
+# python3 midori.py decrypt_block <ciphertext> <key>
+# python3 midori.py decrypt_block 7d354e8b1dc429a300abac87c050951a 534f4d452031323820424954204b4559
+#                                           <ciphertext>                  "SOME 128 BIT KEY"
+
+# python3 midori.py encrypt_ecb 41545441434b204154204441574e2101 534f4d452031323820424954204b4559
+# python3 midori.py decrypt_ecb 7d354e8b1dc429a300abac87c050951a3485873e087a21ed908331410fcb2fe4 534f4d452031323820424954204b4559
+
+# python3 midori.py encrypt_ctr 41545441434b204154204441574e2101 534f4d452031323820424954204b4559 00000000000000000000000000000000
+# python3 midori.py decrypt_ctr f2ff3999c8a82dd91e952d830853ca88 534f4d452031323820424954204b4559 00000000000000000000000000000000

@@ -353,8 +353,8 @@ def inc_bytes(a):
 
 def pad(plaintext):
     """
-    Pads the given plaintext with PKCS#7 padding to a multiple of 16 bytes.
-    Note that if the plaintext size is a multiple of 16,
+    Pads the given plaintext with PKCS#7 padding to a multiple of 8 bytes.
+    Note that if the plaintext size is a multiple of 8,
     a whole block will be added.
     """
     output_file.write("pad({})\n".format(plaintext.hex()))
