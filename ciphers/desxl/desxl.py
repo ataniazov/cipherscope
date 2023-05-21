@@ -6,8 +6,6 @@ https://github.com/ataniazov/cipherscope
 Ata Niyazov
 """
 
-output_file = ""
-
 try:
     import struct
     number_type = int, long

@@ -13,8 +13,6 @@ Although this is an exercise, the `encrypt` and `decrypt` functions should
 provide reasonable security to encrypted messages.
 """
 
-output_file = ""
-
 s_box = (
     0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
     0xCA, 0x82, 0xC9, 0x7D, 0xFA, 0x59, 0x47, 0xF0, 0xAD, 0xD4, 0xA2, 0xAF, 0x9C, 0xA4, 0x72, 0xC0,
@@ -147,8 +145,8 @@ def xor_bytes(a, b):
 
 
 def inc_bytes(a):
-    output_file.write("inc_bytes({})\n".format(a.hex()))
     """ Returns a new byte array with the value increment by 1 """
+    output_file.write("inc_bytes({})\n".format(a.hex()))
     out = list(a)
     for i in reversed(range(len(out))):
         if out[i] == 0xFF:
@@ -621,7 +619,7 @@ class AES:
 
         blocks = []
         for ciphertext_block in split_blocks(ciphertext):
-            # ECB mode decrypt: decrypt(ciphertext)
+            # ECB mode decrypt: decrypt(ciphertext_block)
             blocks.append(self.decrypt_block(ciphertext_block))
 
         return unpad(b''.join(blocks))
