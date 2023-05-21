@@ -67,16 +67,16 @@ class ITUbee():
         return x
 
     def f(self, a):
-        temp_x = self.l(map(lambda x: SBOX[x & 255], a))
+        temp_x = self.l(list(map(lambda x: SBOX[x & 255], a)))
 
-        return map(lambda x: SBOX[x & 255], temp_x)
+        return list(map(lambda x: SBOX[x & 255], temp_x))
 
-    def encrypt(self, message, key):
+    def encrypt_block(self, message, key):
         h_message = generate_hexadecimal_array(message)
         h_key = generate_hexadecimal_array(key)
 
         x = []
-        half = len(h_message) / 2
+        half = len(h_message) // 2
         pl = h_message[:half]
         pr = h_message[-half:]
         kl = h_key[:half]
@@ -98,14 +98,15 @@ class ITUbee():
         cl = xor(x[20], kr)
         cr = xor(x[21], kl)
 
-        return "".join(map(lambda x: '{0:02X}'.format(x), cl + cr))
+        # return "".join(map(lambda x: '{0:02X}'.format(x), cl + cr))
+        return bytes(cl+cr)
 
-    def decrypt(self, enc_message, key):
+    def decrypt_block(self, enc_message, key):
         h_message = generate_hexadecimal_array(enc_message)
         h_key = generate_hexadecimal_array(key)
 
         x = []
-        half = len(h_message) / 2
+        half = len(h_message) // 2
         pl = h_message[:half]
         pr = h_message[-half:]
         kl = h_key[:half]
@@ -127,83 +128,325 @@ class ITUbee():
         cl = xor(x[20], kl)
         cr = xor(x[21], kr)
 
-        return "".join(map(lambda x: '{0:02X}'.format(x), cl + cr))
+        # return "".join(map(lambda x: '{0:02X}'.format(x), cl + cr))
+        return bytes(cl+cr)
 
-# for texts
+    def encrypt_ecb(self, plaintext, key):
+        """
+        Encrypts `plaintext` using ECB mode and PKCS#7 padding.
+        """
+        plaintext = pad(plaintext)
+
+        blocks = []
+        for plaintext_block in split_blocks(plaintext):
+            # ECB mode encrypt: encrypt(plaintext_block)
+            blocks.append(self.encrypt_block(plaintext_block.hex(), key.hex()))
+
+        return b''.join(blocks)
+
+    def decrypt_ecb(self, ciphertext, key):
+        """
+        Decrypts `ciphertext` using ECB mode and PKCS#7 padding.
+        """
+
+        blocks = []
+        for ciphertext_block in split_blocks(ciphertext):
+            # ECB mode decrypt: decrypt(ciphertext_block)
+            blocks.append(self.decrypt_block(
+                ciphertext_block.hex(), key.hex()))
+
+        return unpad(b''.join(blocks))
+
+    def encrypt_ctr(self, plaintext, key, iv):
+        """
+        Encrypts `plaintext` using CTR mode with the given nounce/IV.
+        """
+        assert len(iv) == 10
+
+        blocks = []
+        nonce = iv
+        for plaintext_block in split_blocks(plaintext, require_padding=False):
+            # CTR mode encrypt: plaintext_block XOR encrypt(nonce)
+            encrypted_nonce = self.encrypt_block(nonce.hex(), key.hex())
+            block = xor_bytes(plaintext_block, encrypted_nonce)
+
+            print_msg_box("Plaintext Block <XOR> Encrypted Nonce")
+            output_file.write("xor_bytes({}, {})\nCiphertext Block: {}\n\n".format(
+                plaintext_block.hex(), encrypted_nonce.hex(), block.hex()))
+
+            blocks.append(block)
+            nonce = inc_bytes(nonce)
+
+        return b''.join(blocks)
+
+    def decrypt_ctr(self, ciphertext, key, iv):
+        """
+        Decrypts `ciphertext` using CTR mode with the given nounce/IV.
+        """
+        assert len(iv) == 10
+
+        blocks = []
+        nonce = iv
+        for ciphertext_block in split_blocks(ciphertext, require_padding=False):
+            # CTR mode decrypt: ciphertext XOR encrypt(nonce)
+            encrypted_nonce = self.encrypt_block(nonce.hex(), key.hex())
+            block = xor_bytes(ciphertext_block, encrypted_nonce)
+
+            print_msg_box("Ciphertext Block <XOR> Encrypted Nonce")
+            output_file.write("xor_bytes({}, {})\nPlaintext Block: {}\n\n".format(
+                ciphertext_block.hex(), encrypted_nonce.hex(), block.hex()))
+
+            blocks.append(block)
+            nonce = inc_bytes(nonce)
+
+        return b''.join(blocks)
 
 
-class ITUbeeTexts():
+def pad(plaintext):
+    """
+    Pads the given plaintext with PKCS#7 padding to a multiple of 10 bytes.
+    Note that if the plaintext size is a multiple of 10,
+    a whole block will be added.
+    """
+    output_file.write("pad({})\n".format(plaintext.hex()))
+    padding_len = 10 - (len(plaintext) % 10)
+    padding = bytes([padding_len] * padding_len)
+    return plaintext + padding
 
-    def encrypt_text(self, text, key):
-        plain_text2_hex = "".join("{:02x}".format(ord(c)) for c in text)
 
-        encrypted_texts = []
-        for x in range(0, len(plain_text2_hex), 20):
-            final_index = len(plain_text2_hex) if x + \
-                20 > len(plain_text2_hex) else x + 20
-            current_text = "{0:0<20}".format(plain_text2_hex[x:final_index])
-            encrypted_texts += [self.encrypt(current_text, key)]
+def unpad(plaintext):
+    """
+    Removes a PKCS#7 padding, returning the unpadded text and ensuring the
+    padding was correct.
+    """
+    output_file.write("unpad({})\n".format(plaintext.hex()))
+    padding_len = plaintext[-1]
+    assert padding_len > 0
+    message, padding = plaintext[:-padding_len], plaintext[-padding_len:]
+    assert all(p == padding_len for p in padding)
+    return message
 
-        return encrypted_texts
 
-    def decrypt_text(self, encrypted_texts, key):
-        decrypted_plain_text = ''
-        for enc2 in encrypted_texts:
-            decrypted_plain_text += self.decrypt(enc2, key)
+def split_blocks(message, block_size=10, require_padding=True):
+    assert len(message) % block_size == 0 or not require_padding
+    return [message[i:i+block_size] for i in range(0, len(message), block_size)]
 
-        return decrypted_plain_text.decode('hex').rstrip(' \t\r\n\0')
+
+def print_msg_box(msg, indent=0, align=1, width=None, title=None):
+    lines = msg.split("\n")
+    space = " " * align
+
+    if not width:
+        width = max(map(len, lines))
+
+    buf = f"{' ' * indent}+{'-' * (width + align * 2)}+\n"
+
+    if title:
+        buf += f"{' ' * indent}|{space}{title:<{width}}{space}|\n"
+        buf += f"{' ' * indent}|{space}{'-' * len(title):<{width}}{space}|\n"
+
+    buf += "".join([f"{' ' * indent}|{space}{line:<{width}}{space}|\n" for line in lines])
+
+    buf += f"{' ' * indent}+{'-' * (width + align * 2)}+\n"
+
+    output_file.write(buf)
+
+
+def print_array_bit_diff_column(array_1, array_2, indent=0, column=8, hex=True):
+    assert isinstance(array_1, list) or isinstance(
+        array_1, bytes), f"\"{array_1}\" is not array or bytes!"
+    length_a1 = len(array_1)
+
+    assert isinstance(array_2, list) or isinstance(
+        array_2, bytes), f"\"{array_2}\" is not array or bytes!"
+    length_a2 = len(array_2)
+
+    assert column > 0, f"column number can not be: {column}"
+
+    if length_a1 > length_a2:
+        length_max = length_a1
+        length_min = length_a2
+    else:
+        length_min = length_a1
+        length_max = length_a2
+
+    if length_max == 0:
+        return
+
+    buf = ""
+    count = 0
+
+    for index in range(0, length_max, column):
+        buf += " " * indent
+        buf += ("+--------" + "---" * (1 if hex else 0)) * (column if index+column <=
+                                                            length_max else length_max - index) + "+" * (1 if length_max > 0 else 0) + "\n"
+
+        if index < length_a1:
+            buf += " " * (indent+1)
+            for cell in range(index, (index+column) if (index+column) <= length_a1 else length_a1):
+                if hex:
+                    buf += "{:02X}:".format(array_1[cell])
+                buf += "{:08b} ".format(array_1[cell])
+        buf += "\n"
+
+        if index < length_a2:
+            buf += " " * (indent+1)
+            for cell in range(index, (index+column) if (index+column) <= length_a2 else length_a2):
+                if hex:
+                    buf += "{:02X}:".format(array_2[cell])
+                buf += "{:08b} ".format(array_2[cell])
+        buf += "\n"
+
+        buf += " " * indent
+        buf += ("+--------" + "---" * (1 if hex else 0)) * (column if index+column <=
+                                                            length_max else length_max - index) + "+" * (1 if length_max > 0 else 0) + "\n"
+
+        buf += " " * (indent+1)
+        for cell_index in range(index, (index+column) if (index+column) <= length_max else length_max):
+            diff = (array_1[cell_index] if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
+                array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index])))
+            while diff:
+                count += diff & 1
+                diff >>= 1
+            if hex:
+                buf += "{:02X}:".format(((array_1[cell_index]) if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
+                    array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index]))))
+            buf += "{:08b} ".format(((array_1[cell_index]) if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
+                array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index])))).replace("0", "-").replace("1", "X")
+        buf += "\n"
+
+        buf += " " * indent
+        buf += ("+--------" + "---" * (1 if hex else 0)) * (column if index+column <=
+                                                            length_max else length_max - index) + "+" * (1 if length_max > 0 else 0) + "\n"
+        buf += "\n"
+
+    output_file.write(buf)
+
+    print_msg_box("Bit difference: {}".format(count), indent)
+    output_file.write("\n")
+
+
+def encrypt_block(plaintext, key):
+    output_file.write("encrypt_block({}, {})\n".format(plaintext, key))
+    output_file.write("encrypt_block({}, {})\n\n".format(
+        plaintext.hex(), key.hex()))
+    return ITUbee().encrypt_block(plaintext.hex(), key.hex())
+
+
+def decrypt_block(ciphertext, key):
+    output_file.write("decrypt_block({}, {})\n".format(ciphertext, key))
+    output_file.write("decrypt_block({}, {})\n\n".format(
+        ciphertext.hex(), key.hex()))
+    return ITUbee().decrypt_block(ciphertext.hex(), key.hex())
+
+
+def encrypt_ecb(plaintext, key):
+    output_file.write("encrypt_ecb({}, {})\n".format(plaintext, key))
+    output_file.write("encrypt_ecb({}, {})\n\n".format(
+        plaintext.hex(), key.hex()))
+    return ITUbee().encrypt_ecb(plaintext, key)
+
+
+def decrypt_ecb(ciphertext, key):
+    output_file.write("decrypt_ecb({}, {})\n".format(ciphertext, key))
+    output_file.write("decrypt_ecb({}, {})\n\n".format(
+        ciphertext.hex(), key.hex()))
+    return ITUbee().decrypt_ecb(ciphertext, key)
+
+
+def encrypt_ctr(plaintext, key, iv):
+    output_file.write("encrypt_ctr({}, {}, {})\n".format(plaintext, key, iv))
+    output_file.write("encrypt_ctr({}, {}, {})\n\n".format(
+        plaintext.hex(), key.hex(), iv.hex()))
+    return ITUbee().encrypt_ctr(plaintext, key, iv)
+
+
+def decrypt_ctr(ciphertext, key, iv):
+    output_file.write("decrypt_ctr({}, {}, {})\n".format(ciphertext, key, iv))
+    output_file.write("decrypt_ctr({}, {}, {})\n\n".format(
+        ciphertext.hex(), key.hex(), iv.hex()))
+    return ITUbee().decrypt_ctr(ciphertext, key, iv)
 
 
 if __name__ == "__main__":
-    itubee = ITUbee()
+    import sys
+    import os
 
-    # First test
-    plain_text = '01000000000000000000'
-    key = '00000000000000000080'
+    if len(sys.argv) < 3:
+        # output_file.close()
+        exit()
 
-    enc = itubee.encrypt(plain_text, key)
-    print(enc)
+    text = bytes.fromhex(sys.argv[2].strip())
+    key = bytes.fromhex(sys.argv[3].strip())
 
-    dec = itubee.decrypt(enc, key)
-    print(dec)
+    # output_file_name = os.path.splitext(os.path.basename(__file__))[0] + ".txt"
+    output_file_name = "output.txt"
+    output_file = open(output_file_name, "w")
 
-    # 2 test
-    plain_text = '00000000000000000000'
-    key = '00000000000000000000'
+    output_file.write("ITUbee\n\n")
 
-    enc = itubee.encrypt(plain_text, key)
-    print(enc)
+    if "encrypt_block".startswith(sys.argv[1]):
+        ciphertext = encrypt_block(text, key)
+        output_file.write(
+            "encrypt_block({}, {}):\nEncrypted message: {}\n\n".format(text, key, ciphertext))
+        output_file.write(
+            "encrypt_block({}, {}):\nEncrypted message: {}\n".format(text.hex(), key.hex(), ciphertext.hex()))
+        print_array_bit_diff_column(text, ciphertext)
+        print(ciphertext.hex(), end="")
+    elif "decrypt_block".startswith(sys.argv[1]):
+        plaintext = decrypt_block(text, key)
+        output_file.write(
+            "decrypt_block({}, {}):\nDecrypted message: {}\n\n".format(text, key, plaintext))
+        output_file.write(
+            "decrypt_block({}, {}):\nDecrypted message: {}\n".format(text.hex(), key.hex(), plaintext.hex()))
+        print_array_bit_diff_column(text, plaintext)
+        print(plaintext.hex(), end="")
+    elif "encrypt_ecb".startswith(sys.argv[1]):
+        ciphertext = encrypt_ecb(text, key)
+        output_file.write(
+            "encrypt_ecb({}, {}):\nEncrypted message: {}\n\n".format(text, key, ciphertext))
+        output_file.write(
+            "encrypt_ecb({}, {}):\nEncrypted message: {}\n".format(text.hex(), key.hex(), ciphertext.hex()))
+        print_array_bit_diff_column(text, ciphertext)
+        print(ciphertext.hex(), end="")
+    elif "decrypt_ecb".startswith(sys.argv[1]):
+        plaintext = decrypt_ecb(text, key)
+        output_file.write(
+            "decrypt_ecb({}, {}):\nDecrypted message: {}\n\n".format(text, key, plaintext))
+        output_file.write(
+            "decrypt_ecb({}, {}):\nDecrypted message: {}\n".format(text.hex(), key.hex(), plaintext.hex()))
+        print_array_bit_diff_column(text, plaintext)
+        print(plaintext.hex(), end="")
+    elif "encrypt_ctr".startswith(sys.argv[1]):
+        iv = bytes.fromhex(sys.argv[4].strip())
+        ciphertext = encrypt_ctr(text, key, iv)
+        output_file.write(
+            "encrypt_ctr({}, {}, {}):\nEncrypted message: {}\n\n".format(text, key, iv, ciphertext))
+        output_file.write(
+            "encrypt_ctr({}, {}, {}):\nEncrypted message: {}\n".format(text.hex(), key.hex(), iv.hex(), ciphertext.hex()))
+        print_array_bit_diff_column(text, ciphertext)
+        print(ciphertext.hex(), end="")
+    elif "decrypt_ctr".startswith(sys.argv[1]):
+        iv = bytes.fromhex(sys.argv[4].strip())
+        plaintext = decrypt_ctr(text, key, iv)
+        output_file.write(
+            "decrypt_ctr({}, {}, {}):\nDecrypted message: {}\n\n".format(text, key, iv, plaintext))
+        output_file.write(
+            "decrypt_ctr({}, {}, {}):\nDecrypted message: {}\n".format(text.hex(), key.hex(), iv.hex(), plaintext.hex()))
+        print_array_bit_diff_column(text, plaintext)
+        print(plaintext.hex(), end="")
+    output_file.close()
 
-    dec = itubee.decrypt(enc, key)
-    print(dec)
+# python3 itubee.py encrypt_block <plaintext> <key>
+# python3 itubee.py encrypt_block
+#                              "HelloWorld"             "SOME 80BIT"
 
-    # 3 test
-    plain_text = '6925278951fbf3b25ccc'
-    key = 'c538bd9289822be43363'
+# python3 itubee.py decrypt_block <ciphertext> <key>
+# python3 itubee.py decrypt_block
+#                                  <ciphertext>                  "SOME 80BIT"
 
-    enc = itubee.encrypt(plain_text, key)
-    print(enc)
+# python3 itubee.py encrypt_ecb
+# python3 itubee.py decrypt_ecb
 
-    dec = itubee.decrypt(enc, key)
-    print(dec)
-
-    # 4 test
-    plain_text = '6925288A51fCf3b25ccc'
-    key = '6925288A51fCf3b25ccc'
-
-    enc = itubee.encrypt(plain_text, key)
-    print(enc)
-
-    dec = itubee.decrypt(enc, key)
-    print(dec)
-
-    itubee = ITUbeeTexts()
-
-    key2 = '00000000000000000080'
-    plain_text2 = 'Andrey Rocks'
-
-    enc2 = itubee.encrypt_text(plain_text2, key2)
-    dec2 = itubee.decrypt_text(enc2, key2)
-    print(enc2)
-    print(dec2)
-    print(dec2 == plain_text2)
+# python3 itubee.py encrypt_ctr
+# python3 itubee.py decrypt_ctr
