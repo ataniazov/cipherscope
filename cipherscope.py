@@ -27,7 +27,7 @@ class MessageBox(customtkinter.CTkToplevel):
         self.bind("<Control-w>", self.on_close)
         # self.createcommand("tk::mac::Quit", self.on_close)
 
-        # set grid layout 1x2
+        # set grid layout 1x1
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
@@ -345,10 +345,10 @@ class CipherScope(customtkinter.CTk):
         #  End of Cipher Frame  #
         #########################
 
-        # create block frame
-        self.block_frame = customtkinter.CTkFrame(
-            self, corner_radius=0, fg_color="transparent")
-        # self.block_frame.grid_columnconfigure(0, weight=1)
+        # # create block frame
+        # self.block_frame = customtkinter.CTkFrame(
+        #     self, corner_radius=0, fg_color="transparent")
+        # # self.block_frame.grid_columnconfigure(0, weight=1)
 
         # select default frame
         self.select_frame_by_name("info")
@@ -473,10 +473,10 @@ class CipherScope(customtkinter.CTk):
         else:
             self.cipher_frame.grid_forget()
 
-        if "block" == name:
-            self.block_frame.grid(row=0, column=1, sticky="nsew")
-        else:
-            self.block_frame.grid_forget()
+        # if "block" == name:
+        #     self.block_frame.grid(row=0, column=1, sticky="nsew")
+        # else:
+        #     self.block_frame.grid_forget()
 
     def info_button_event(self):
         self.select_frame_by_name("info")
@@ -538,8 +538,8 @@ class CipherScope(customtkinter.CTk):
     def misty1_button_event(self):
         self.select_frame_by_name("misty1")
 
-    def block_button_event(self):
-        self.select_frame_by_name("block")
+    # def block_button_event(self):
+    #     self.select_frame_by_name("block")
 
     def change_appearance_mode_optionmenu_event(self, new_appearance_mode: str):
         customtkinter.set_appearance_mode(new_appearance_mode)
