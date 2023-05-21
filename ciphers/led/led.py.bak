@@ -9,7 +9,7 @@ import galois
 from hmac import new as new_hmac, compare_digest
 from hashlib import pbkdf2_hmac
 
-# from copy import deepcopy
+from copy import deepcopy
 import os
 
 
@@ -23,10 +23,30 @@ MIX_MATRIX = [[0x4, 0x1, 0x2, 0x2],
               [0xB, 0xE, 0XA, 0x9],
               [0x2, 0x2, 0xF, 0xB]]
 
+HMAC_KEY_SIZE = 8
+IV_SIZE = 8
+
+SALT_SIZE = 16
+HMAC_SIZE = 32
 
 GF16 = galois.GF(2**4)
 
 MIX_MATRIX_INV = np.linalg.inv(GF16(MIX_MATRIX))
+print(MIX_MATRIX_INV)
+
+
+def get_key_iv(password, salt, key_size=8, workload=100000):
+    """
+    Stretches the password and extracts an AES key, an HMAC key and an AES
+    initialization vector.
+    """
+    assert (key_size == 8 or key_size == 16)
+    stretched = pbkdf2_hmac('sha256', password, salt,
+                            workload, key_size + IV_SIZE + HMAC_KEY_SIZE)
+    aes_key, stretched = stretched[:key_size], stretched[key_size:]
+    hmac_key, stretched = stretched[:HMAC_KEY_SIZE], stretched[HMAC_KEY_SIZE:]
+    iv = stretched[:IV_SIZE]
+    return aes_key, hmac_key, iv
 
 
 def bytes2matrix(text):
@@ -422,282 +442,63 @@ class LED:
         return b''.join(blocks)
 
 
-# def encrypt(key, plaintext, mode='cbc', workload=100000, key_size=8):
-#     """
-#     Encrypts `plaintext` with `key` using LED, an HMAC to verify integrity,
-#     and PBKDF2 to stretch the given key.
+def encrypt(key, plaintext, mode='cbc', workload=100000, key_size=8):
+    """
+    Encrypts `plaintext` with `key` using LED, an HMAC to verify integrity,
+    and PBKDF2 to stretch the given key.
 
-#     The exact algorithm is specified in the module docstring.
-#     """
-#     if isinstance(key, str):
-#         key = key.encode('utf-8')
-#     if isinstance(plaintext, str):
-#         plaintext = plaintext.encode('utf-8')
+    The exact algorithm is specified in the module docstring.
+    """
+    if isinstance(key, str):
+        key = key.encode('utf-8')
+    if isinstance(plaintext, str):
+        plaintext = plaintext.encode('utf-8')
 
-#     salt = os.urandom(SALT_SIZE)
-#     key, hmac_key, iv = get_key_iv(key, salt, key_size, workload)
-#     ciphertext = LED(key).modes_dict[mode][0](plaintext, iv)
-#     hmac = new_hmac(hmac_key, salt + ciphertext, 'sha256').digest()
-#     assert len(hmac) == HMAC_SIZE
+    salt = os.urandom(SALT_SIZE)
+    key, hmac_key, iv = get_key_iv(key, salt, key_size, workload)
+    ciphertext = LED(key).modes_dict[mode][0](plaintext, iv)
+    hmac = new_hmac(hmac_key, salt + ciphertext, 'sha256').digest()
+    assert len(hmac) == HMAC_SIZE
 
-#     return hmac + salt + ciphertext
-
-
-# def decrypt(key, ciphertext, mode='cbc', workload=100000, key_size=8):
-#     """
-#     Decrypts `ciphertext` with `key` using LED, an HMAC to verify integrity,
-#     and PBKDF2 to stretch the given key.
-
-#     The exact algorithm is specified in the module docstring.
-#     """
-
-#     assert len(
-#         ciphertext) % 8 == 0, "Ciphertext must be made of full 16-byte blocks."
-
-#     assert len(ciphertext) >= 16, """
-#     Ciphertext must be at least 32 bytes long (16 byte salt + 16 byte block). To
-#     encrypt or decrypt single blocks use `LED(key).decrypt_block(ciphertext)`.
-#     """
-
-#     if isinstance(key, str):
-#         key = key.encode('utf-8')
-
-#     hmac, ciphertext = ciphertext[:HMAC_SIZE], ciphertext[HMAC_SIZE:]
-#     salt, ciphertext = ciphertext[:SALT_SIZE], ciphertext[SALT_SIZE:]
-#     key, hmac_key, iv = get_key_iv(key, salt, key_size, workload)
-
-#     expected_hmac = new_hmac(hmac_key, salt + ciphertext, 'sha256').digest()
-#     assert compare_digest(
-#         hmac, expected_hmac), 'Ciphertext corrupted or tampered.'
-
-#     return LED(key).modes_dict[mode][1](ciphertext, iv)
+    return hmac + salt + ciphertext
 
 
-# # workload=100000
-# # salt = os.urandom(SALT_SIZE)
-# # key, hmac_key, iv = get_key_iv(b'DHRUVDESHMUKH\0\0\0', salt, workload)
-# # led = LED(key)
-# print(decrypt(b'DHRUVDES', encrypt(b'DHRUVDES', b'DHRUVDESHMUKH\0\0\0',
-#       mode='ctr', key_size=16), mode='ctr', key_size=16))
-# print(encrypt(b'DHRUVDES', b'DHRUVDESHMUKH\0\0\0', mode='ctr', key_size=16))
+def decrypt(key, ciphertext, mode='cbc', workload=100000, key_size=8):
+    """
+    Decrypts `ciphertext` with `key` using LED, an HMAC to verify integrity,
+    and PBKDF2 to stretch the given key.
 
-# # print(led.decrypt_block(led.encrypt_block(b'DHRUVDES')))
+    The exact algorithm is specified in the module docstring.
+    """
 
-def print_msg_box(msg, indent=0, align=1, width=None, title=None):
-    lines = msg.split("\n")
-    space = " " * align
+    assert len(
+        ciphertext) % 8 == 0, "Ciphertext must be made of full 16-byte blocks."
 
-    if not width:
-        width = max(map(len, lines))
+    assert len(ciphertext) >= 16, """
+    Ciphertext must be at least 32 bytes long (16 byte salt + 16 byte block). To
+    encrypt or decrypt single blocks use `LED(key).decrypt_block(ciphertext)`.
+    """
 
-    buf = f"{' ' * indent}+{'-' * (width + align * 2)}+\n"
+    if isinstance(key, str):
+        key = key.encode('utf-8')
 
-    if title:
-        buf += f"{' ' * indent}|{space}{title:<{width}}{space}|\n"
-        buf += f"{' ' * indent}|{space}{'-' * len(title):<{width}}{space}|\n"
+    hmac, ciphertext = ciphertext[:HMAC_SIZE], ciphertext[HMAC_SIZE:]
+    salt, ciphertext = ciphertext[:SALT_SIZE], ciphertext[SALT_SIZE:]
+    key, hmac_key, iv = get_key_iv(key, salt, key_size, workload)
 
-    buf += "".join([f"{' ' * indent}|{space}{line:<{width}}{space}|\n" for line in lines])
+    expected_hmac = new_hmac(hmac_key, salt + ciphertext, 'sha256').digest()
+    assert compare_digest(
+        hmac, expected_hmac), 'Ciphertext corrupted or tampered.'
 
-    buf += f"{' ' * indent}+{'-' * (width + align * 2)}+\n"
-
-    output_file.write(buf)
-
-
-def print_array_bit_diff_column(array_1, array_2, indent=0, column=8, hex=True):
-    assert isinstance(array_1, list) or isinstance(
-        array_1, bytes), f"\"{array_1}\" is not array or bytes!"
-    length_a1 = len(array_1)
-
-    assert isinstance(array_2, list) or isinstance(
-        array_2, bytes), f"\"{array_2}\" is not array or bytes!"
-    length_a2 = len(array_2)
-
-    assert column > 0, f"column number can not be: {column}"
-
-    if length_a1 > length_a2:
-        length_max = length_a1
-        length_min = length_a2
-    else:
-        length_min = length_a1
-        length_max = length_a2
-
-    if length_max == 0:
-        return
-
-    buf = ""
-    count = 0
-
-    for index in range(0, length_max, column):
-        buf += " " * indent
-        buf += ("+--------" + "---" * (1 if hex else 0)) * (column if index+column <=
-                                                            length_max else length_max - index) + "+" * (1 if length_max > 0 else 0) + "\n"
-
-        if index < length_a1:
-            buf += " " * (indent+1)
-            for cell in range(index, (index+column) if (index+column) <= length_a1 else length_a1):
-                if hex:
-                    buf += "{:02X}:".format(array_1[cell])
-                buf += "{:08b} ".format(array_1[cell])
-        buf += "\n"
-
-        if index < length_a2:
-            buf += " " * (indent+1)
-            for cell in range(index, (index+column) if (index+column) <= length_a2 else length_a2):
-                if hex:
-                    buf += "{:02X}:".format(array_2[cell])
-                buf += "{:08b} ".format(array_2[cell])
-        buf += "\n"
-
-        buf += " " * indent
-        buf += ("+--------" + "---" * (1 if hex else 0)) * (column if index+column <=
-                                                            length_max else length_max - index) + "+" * (1 if length_max > 0 else 0) + "\n"
-
-        buf += " " * (indent+1)
-        for cell_index in range(index, (index+column) if (index+column) <= length_max else length_max):
-            diff = (array_1[cell_index] if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
-                array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index])))
-            while diff:
-                count += diff & 1
-                diff >>= 1
-            if hex:
-                buf += "{:02X}:".format(((array_1[cell_index]) if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
-                    array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index]))))
-            buf += "{:08b} ".format(((array_1[cell_index]) if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
-                array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index])))).replace("0", "-").replace("1", "X")
-        buf += "\n"
-
-        buf += " " * indent
-        buf += ("+--------" + "---" * (1 if hex else 0)) * (column if index+column <=
-                                                            length_max else length_max - index) + "+" * (1 if length_max > 0 else 0) + "\n"
-        buf += "\n"
-
-    output_file.write(buf)
-
-    print_msg_box("Bit difference: {}".format(count), indent)
-    output_file.write("\n")
+    return LED(key).modes_dict[mode][1](ciphertext, iv)
 
 
-def encrypt_block(plaintext, key):
-    output_file.write("encrypt_block({}, {})\n".format(plaintext, key))
-    output_file.write("encrypt_block({}, {})\n\n".format(
-        plaintext.hex(), key.hex()))
-    return LED(key).encrypt_block(plaintext)
+# workload=100000
+# salt = os.urandom(SALT_SIZE)
+# key, hmac_key, iv = get_key_iv(b'DHRUVDESHMUKH\0\0\0', salt, workload)
+# led = LED(key)
+print(decrypt(b'DHRUVDES', encrypt(b'DHRUVDES', b'DHRUVDESHMUKH\0\0\0',
+      mode='ctr', key_size=16), mode='ctr', key_size=16))
+print(encrypt(b'DHRUVDES', b'DHRUVDESHMUKH\0\0\0', mode='ctr', key_size=16))
 
-
-def decrypt_block(ciphertext, key):
-    output_file.write("decrypt_block({}, {})\n".format(ciphertext, key))
-    output_file.write("decrypt_block({}, {})\n\n".format(
-        ciphertext.hex(), key.hex()))
-    return LED(key).decrypt_block(ciphertext)
-
-
-def encrypt_ecb(plaintext, key):
-    output_file.write("encrypt_ecb({}, {})\n".format(plaintext, key))
-    output_file.write("encrypt_ecb({}, {})\n\n".format(
-        plaintext.hex(), key.hex()))
-    return LED(key).encrypt_ecb(plaintext)
-
-
-def decrypt_ecb(ciphertext, key):
-    output_file.write("decrypt_ecb({}, {})\n".format(ciphertext, key))
-    output_file.write("decrypt_ecb({}, {})\n\n".format(
-        ciphertext.hex(), key.hex()))
-    return LED(key).decrypt_ecb(ciphertext)
-
-
-def encrypt_ctr(plaintext, key, iv):
-    output_file.write("encrypt_ctr({}, {}, {})\n".format(plaintext, key, iv))
-    output_file.write("encrypt_ctr({}, {}, {})\n\n".format(
-        plaintext.hex(), key.hex(), iv.hex()))
-    return LED(key).encrypt_ctr(plaintext, iv)
-
-
-def decrypt_ctr(ciphertext, key, iv):
-    output_file.write("decrypt_ctr({}, {}, {})\n".format(ciphertext, key, iv))
-    output_file.write("decrypt_ctr({}, {}, {})\n\n".format(
-        ciphertext.hex(), key.hex(), iv.hex()))
-    return LED(key).decrypt_ctr(ciphertext, iv)
-
-
-if __name__ == "__main__":
-    import sys
-    import os
-
-    if len(sys.argv) < 3:
-        # output_file.close()
-        exit()
-
-    text = bytes.fromhex(sys.argv[2].strip())
-    key = bytes.fromhex(sys.argv[3].strip())
-
-    # output_file_name = os.path.splitext(os.path.basename(__file__))[0] + ".txt"
-    output_file_name = "output.txt"
-    output_file = open(output_file_name, "w")
-
-    output_file.write("LED\n\n")
-
-    if "encrypt_block".startswith(sys.argv[1]):
-        ciphertext = encrypt_block(text, key)
-        output_file.write(
-            "encrypt_block({}, {}):\nEncrypted message: {}\n\n".format(text, key, ciphertext))
-        output_file.write(
-            "encrypt_block({}, {}):\nEncrypted message: {}\n".format(text.hex(), key.hex(), ciphertext.hex()))
-        print_array_bit_diff_column(text, ciphertext)
-        print(ciphertext.hex(), end="")
-    elif "decrypt_block".startswith(sys.argv[1]):
-        plaintext = decrypt_block(text, key)
-        output_file.write(
-            "decrypt_block({}, {}):\nDecrypted message: {}\n\n".format(text, key, plaintext))
-        output_file.write(
-            "decrypt_block({}, {}):\nDecrypted message: {}\n".format(text.hex(), key.hex(), plaintext.hex()))
-        print_array_bit_diff_column(text, plaintext)
-        print(plaintext.hex(), end="")
-    elif "encrypt_ecb".startswith(sys.argv[1]):
-        ciphertext = encrypt_ecb(text, key)
-        output_file.write(
-            "encrypt_ecb({}, {}):\nEncrypted message: {}\n\n".format(text, key, ciphertext))
-        output_file.write(
-            "encrypt_ecb({}, {}):\nEncrypted message: {}\n".format(text.hex(), key.hex(), ciphertext.hex()))
-        print_array_bit_diff_column(text, ciphertext)
-        print(ciphertext.hex(), end="")
-    elif "decrypt_ecb".startswith(sys.argv[1]):
-        plaintext = decrypt_ecb(text, key)
-        output_file.write(
-            "decrypt_ecb({}, {}):\nDecrypted message: {}\n\n".format(text, key, plaintext))
-        output_file.write(
-            "decrypt_ecb({}, {}):\nDecrypted message: {}\n".format(text.hex(), key.hex(), plaintext.hex()))
-        print_array_bit_diff_column(text, plaintext)
-        print(plaintext.hex(), end="")
-    elif "encrypt_ctr".startswith(sys.argv[1]):
-        iv = bytes.fromhex(sys.argv[4].strip())
-        ciphertext = encrypt_ctr(text, key, iv)
-        output_file.write(
-            "encrypt_ctr({}, {}, {}):\nEncrypted message: {}\n\n".format(text, key, iv, ciphertext))
-        output_file.write(
-            "encrypt_ctr({}, {}, {}):\nEncrypted message: {}\n".format(text.hex(), key.hex(), iv.hex(), ciphertext.hex()))
-        print_array_bit_diff_column(text, ciphertext)
-        print(ciphertext.hex(), end="")
-    elif "decrypt_ctr".startswith(sys.argv[1]):
-        iv = bytes.fromhex(sys.argv[4].strip())
-        plaintext = decrypt_ctr(text, key, iv)
-        output_file.write(
-            "decrypt_ctr({}, {}, {}):\nDecrypted message: {}\n\n".format(text, key, iv, plaintext))
-        output_file.write(
-            "decrypt_ctr({}, {}, {}):\nDecrypted message: {}\n".format(text.hex(), key.hex(), iv.hex(), plaintext.hex()))
-        print_array_bit_diff_column(text, plaintext)
-        print(plaintext.hex(), end="")
-    output_file.close()
-
-# python3 led.py encrypt_block <plaintext> <key>
-# python3 led.py encrypt_block 41545441434b204154204441574e2101 534f4d452031323820424954204b4559
-#                              "ATTACK AT DAWN!\x01"             "SOME 128 BIT KEY"
-
-# python3 led.py decrypt_block <ciphertext> <key>
-# python3 led.py decrypt_block 7d354e8b1dc429a300abac87c050951a 534f4d452031323820424954204b4559
-#                                  <ciphertext>                  "SOME 128 BIT KEY"
-
-# python3 led.py encrypt_ecb 41545441434b204154204441574e2101 534f4d452031323820424954204b4559
-# python3 led.py decrypt_ecb 7d354e8b1dc429a300abac87c050951a3485873e087a21ed908331410fcb2fe4 534f4d452031323820424954204b4559
-
-# python3 led.py encrypt_ctr 41545441434b204154204441574e2101 534f4d452031323820424954204b4559 00000000000000000000000000000000
-# python3 led.py decrypt_ctr f2ff3999c8a82dd91e952d830853ca88 534f4d452031323820424954204b4559 00000000000000000000000000000000
+# print(led.decrypt_block(led.encrypt_block(b'DHRUVDES')))

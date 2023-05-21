@@ -15,6 +15,100 @@ SIZE_256 = 32
 block_size = 16
 
 
+def print_msg_box(msg, indent=0, align=1, width=None, title=None):
+    lines = msg.split("\n")
+    space = " " * align
+
+    if not width:
+        width = max(map(len, lines))
+
+    buf = f"{' ' * indent}+{'-' * (width + align * 2)}+\n"
+
+    if title:
+        buf += f"{' ' * indent}|{space}{title:<{width}}{space}|\n"
+        buf += f"{' ' * indent}|{space}{'-' * len(title):<{width}}{space}|\n"
+
+    buf += "".join([f"{' ' * indent}|{space}{line:<{width}}{space}|\n" for line in lines])
+
+    buf += f"{' ' * indent}+{'-' * (width + align * 2)}+\n"
+
+    output_file.write(buf)
+
+
+def print_array_bit_diff_column(array_1, array_2, indent=0, column=8, hex=True):
+    assert isinstance(array_1, list) or isinstance(
+        array_1, bytes), f"\"{array_1}\" is not array or bytes!"
+    length_a1 = len(array_1)
+
+    assert isinstance(array_2, list) or isinstance(
+        array_2, bytes), f"\"{array_2}\" is not array or bytes!"
+    length_a2 = len(array_2)
+
+    assert column > 0, f"column number can not be: {column}"
+
+    if length_a1 > length_a2:
+        length_max = length_a1
+        length_min = length_a2
+    else:
+        length_min = length_a1
+        length_max = length_a2
+
+    if length_max == 0:
+        return
+
+    buf = ""
+    count = 0
+
+    for index in range(0, length_max, column):
+        buf += " " * indent
+        buf += ("+--------" + "---" * (1 if hex else 0)) * (column if index+column <=
+                                                            length_max else length_max - index) + "+" * (1 if length_max > 0 else 0) + "\n"
+
+        if index < length_a1:
+            buf += " " * (indent+1)
+            for cell in range(index, (index+column) if (index+column) <= length_a1 else length_a1):
+                if hex:
+                    buf += "{:02X}:".format(array_1[cell])
+                buf += "{:08b} ".format(array_1[cell])
+        buf += "\n"
+
+        if index < length_a2:
+            buf += " " * (indent+1)
+            for cell in range(index, (index+column) if (index+column) <= length_a2 else length_a2):
+                if hex:
+                    buf += "{:02X}:".format(array_2[cell])
+                buf += "{:08b} ".format(array_2[cell])
+        buf += "\n"
+
+        buf += " " * indent
+        buf += ("+--------" + "---" * (1 if hex else 0)) * (column if index+column <=
+                                                            length_max else length_max - index) + "+" * (1 if length_max > 0 else 0) + "\n"
+
+        buf += " " * (indent+1)
+        for cell_index in range(index, (index+column) if (index+column) <= length_max else length_max):
+            diff = (array_1[cell_index] if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
+                array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index])))
+            while diff:
+                count += diff & 1
+                diff >>= 1
+            if hex:
+                buf += "{:02X}:".format(((array_1[cell_index]) if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
+                    array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index]))))
+            buf += "{:08b} ".format(((array_1[cell_index]) if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
+                array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index])))).replace("0", "-").replace("1", "X")
+        buf += "\n"
+
+        buf += " " * indent
+        buf += ("+--------" + "---" * (1 if hex else 0)) * (column if index+column <=
+                                                            length_max else length_max - index) + "+" * (1 if length_max > 0 else 0) + "\n"
+        buf += "\n"
+
+    output_file.write(buf)
+
+    print_msg_box("Bit difference: {}".format(count), indent)
+    output_file.write("\n")
+
+
 class LEA(object):
     # valid key sizes
     keySize = (SIZE_128, SIZE_192, SIZE_256)
@@ -145,7 +239,7 @@ class LEA(object):
                     6 * i + 5) & 7] = self.ROL((T[(6 * i + 5) & 7] + self.ROL(temp, 5)) & 0xffffffff, 17)
 
     # encrypts a 128 bit input block
-    def encrypt(self, pt):
+    def encrypt_block(self, pt):
         if len(pt) != 16:
             raise AttributeError('length of pt should be 16 not %d' % len(pt))
 
@@ -181,12 +275,12 @@ class LEA(object):
             temp[0] = self.ROL(
                 ((temp[3] ^ self.rk[i][0]) + (temp[0] ^ self.rk[i][1])) & 0xffffffff, 9)
 
-        ct = bytearray(struct.pack(
+        ct = bytes(struct.pack(
             '<LLLL', temp[0], temp[1], temp[2], temp[3]))
         return ct
 
     # decrypts a 128 bit input block
-    def decrypt(self, ct):
+    def decrypt_block(self, ct):
         ct = LEA.to_bytearray(ct)
         if len(ct) != 16:
             raise AttributeError('length of ct should be 16 not %d' % len(ct))
@@ -222,132 +316,202 @@ class LEA(object):
             temp[3] = ((self.ROL(temp[3], 3) - (temp[2] ^ self.rk[i][4]))
                        & 0xffffffff) ^ self.rk[i][5]
 
-        pt = bytearray(struct.pack(
+        pt = bytes(struct.pack(
             '<LLLL', temp[0], temp[1], temp[2], temp[3]))
 
         return pt
 
-class CipherMode(object):
-    lea = None
-    no_more = False
-    buffer = bytearray()
+    def encrypt_ecb(self, plaintext):
+        """
+        Encrypts `plaintext` using ECB mode and PKCS#7 padding.
+        """
+        plaintext = pad(plaintext)
 
-    def update(self, data):
-        raise AssertionError('Only for reference')
+        blocks = []
+        for plaintext_block in split_blocks(plaintext):
+            # ECB mode encrypt: encrypt(plaintext_block)
+            blocks.append(self.encrypt_block(plaintext_block))
 
-    def encrypt(self, pt):
-        ct = bytearray(16)
-        raise AssertionError('Only for reference')
+        return b''.join(blocks)
 
-    def decrypt(self, ct):
-        pt = bytearray(16)
-        raise AssertionError('Only for reference')
+    def decrypt_ecb(self, ciphertext):
+        """
+        Decrypts `ciphertext` using ECB mode and PKCS#7 padding.
+        """
 
-    def final(self, *args, **kwargs):
-        self.no_more = True
-        return b''
+        blocks = []
+        for ciphertext_block in split_blocks(ciphertext):
+            # ECB mode decrypt: decrypt(ciphertext_block)
+            blocks.append(self.decrypt_block(ciphertext_block))
 
-class CBC(CipherMode):
-    def __init__(self, do_enc, key, iv, PKCS5Padding=False):
-        self.buffer = bytearray()
-        self.lea = LEA(key)
-        self.PKCS5Padding = PKCS5Padding
-        self.chain_vec = LEA.to_bytearray(iv, 'IV', forcecopy=True)
+        return unpad(b''.join(blocks))
 
-        if do_enc:
-            self.update = self.encrypt
-        else:
-            self.update = self.decrypt
+    def encrypt_ctr(self, plaintext, iv):
+        """
+        Encrypts `plaintext` using CTR mode with the given nounce/IV.
+        """
+        assert len(iv) == 16
 
-    def encrypt(self, pt):
-        if pt is None:
-            raise AttributeError('Improper pt')
-        if self.no_more:
-            raise RuntimeError('Already finished')
+        blocks = []
+        nonce = iv
+        for plaintext_block in split_blocks(plaintext, require_padding=False):
+            # CTR mode encrypt: plaintext_block XOR encrypt(nonce)
+            encrypted_nonce = self.encrypt_block(nonce)
+            block = xor_bytes(plaintext_block, encrypted_nonce)
 
-        self.buffer += LEA.to_bytearray(pt)
-        offset = 0
-        ct = bytearray()
+            print_msg_box("Plaintext Block <XOR> Encrypted Nonce")
+            output_file.write("xor_bytes({}, {})\nCiphertext Block: {}\n\n".format(
+                plaintext_block.hex(), encrypted_nonce.hex(), block.hex()))
 
-        len_x16 = len(self.buffer)-16
-        while offset <= len_x16:
-            self.chain_vec = self.lea.encrypt(LEA.xorAr(self.chain_vec, self.buffer[offset:offset+16]))
-            ct += self.chain_vec
+            blocks.append(block)
+            nonce = inc_bytes(nonce)
 
-            offset += 16
+        return b''.join(blocks)
 
-        if offset != 0:
-            self.buffer = self.buffer[offset:]
+    def decrypt_ctr(self, ciphertext, iv):
+        """
+        Decrypts `ciphertext` using CTR mode with the given nounce/IV.
+        """
+        assert len(iv) == 16
 
-        return ct
+        blocks = []
+        nonce = iv
+        for ciphertext_block in split_blocks(ciphertext, require_padding=False):
+            # CTR mode decrypt: ciphertext XOR encrypt(nonce)
+            encrypted_nonce = self.encrypt_block(nonce)
+            block = xor_bytes(ciphertext_block, encrypted_nonce)
 
-    def decrypt(self, ct):
-        if ct is None:
-            raise AttributeError('Improper ct')
-        if self.no_more:
-            raise RuntimeError('Already finished')
+            print_msg_box("Ciphertext Block <XOR> Encrypted Nonce")
+            output_file.write("xor_bytes({}, {})\nPlaintext Block: {}\n\n".format(
+                ciphertext_block.hex(), encrypted_nonce.hex(), block.hex()))
 
-        self.buffer += LEA.to_bytearray(ct)
-        offset = 0
-        pt = bytearray()
+            blocks.append(block)
+            nonce = inc_bytes(nonce)
 
-        len_x16 = len(self.buffer)-16
-        if self.PKCS5Padding and len_x16 % 16 == 0:
-            len_x16 -= 16
-        while offset <= len_x16:
-            temp = self.buffer[offset:offset+16]
-            pt += LEA.xorAr(self.chain_vec, self.lea.decrypt(temp))
-            self.chain_vec = temp
+        return b''.join(blocks)
 
-            offset += 16
 
-        if offset != 0:
-            self.buffer = self.buffer[offset:]
+def encrypt_block(plaintext, key):
+    output_file.write("encrypt_block({}, {})\n".format(plaintext, key))
+    output_file.write("encrypt_block({}, {})\n\n".format(
+        plaintext.hex(), key.hex()))
+    return LEA(key).encrypt_block(plaintext)
 
-        return pt
 
-    def final(self):
-        result = bytearray()
-        if self.PKCS5Padding and self.encrypt == self.update:
-            more = 16 - len(self.buffer)
-            self.buffer += bytearray([more])*more
-            result += self.lea.encrypt(LEA.xorAr(self.chain_vec, self.buffer))
+def decrypt_block(ciphertext, key):
+    output_file.write("decrypt_block({}, {})\n".format(ciphertext, key))
+    output_file.write("decrypt_block({}, {})\n\n".format(
+        ciphertext.hex(), key.hex()))
+    return LEA(key).decrypt_block(ciphertext)
 
-        elif self.PKCS5Padding and self.decrypt == self.update:
-            if len(self.buffer) != 16:
-                raise ValueError('Improper data length')
-            self.buffer = LEA.xorAr(self.chain_vec, self.lea.decrypt(self.buffer))
-            more = self.buffer[-1]
-            for i in range(16-more, 15):
-                if self.buffer[i] != more:
-                    raise ValueError('Padding error')
-            result += self.buffer[:16-more]
-        elif len(self.buffer) > 0:
-            self.buffer = bytearray()
-            raise ValueError('Improper data length')
-        self.buffer = bytearray()
-        self.chain_vec = bytearray(16)
-        self.no_more = True
-        return result
+
+def encrypt_ecb(plaintext, key):
+    output_file.write("encrypt_ecb({}, {})\n".format(plaintext, key))
+    output_file.write("encrypt_ecb({}, {})\n\n".format(
+        plaintext.hex(), key.hex()))
+    return LEA(key).encrypt_ecb(plaintext)
+
+
+def decrypt_ecb(ciphertext, key):
+    output_file.write("decrypt_ecb({}, {})\n".format(ciphertext, key))
+    output_file.write("decrypt_ecb({}, {})\n\n".format(
+        ciphertext.hex(), key.hex()))
+    return LEA(key).decrypt_ecb(ciphertext)
+
+
+def encrypt_ctr(plaintext, key, iv):
+    output_file.write("encrypt_ctr({}, {}, {})\n".format(plaintext, key, iv))
+    output_file.write("encrypt_ctr({}, {}, {})\n\n".format(
+        plaintext.hex(), key.hex(), iv.hex()))
+    return LEA(key).encrypt_ctr(plaintext, iv)
+
+
+def decrypt_ctr(ciphertext, key, iv):
+    output_file.write("decrypt_ctr({}, {}, {})\n".format(ciphertext, key, iv))
+    output_file.write("decrypt_ctr({}, {}, {})\n\n".format(
+        ciphertext.hex(), key.hex(), iv.hex()))
+    return LEA(key).decrypt_ctr(ciphertext, iv)
+
 
 if __name__ == "__main__":
-    dec = "blacksnakeblacksnake1234"
-    input_str='Hello Alice,I am sending you this e-mail to make sure you are alive!'
-    
-    pt = bytearray(input_str, "utf8")
-    
-    #a random 128 bit initial vector
-    iv = base64.b16encode(random.getrandbits(128).to_bytes(16, byteorder='little'))
-    
-    #encryption
-    leaCBC = CBC(True, dec,iv,True)
-    ct = leaCBC.update(pt)
-    ct += leaCBC.final()
+    import sys
+    import os
 
-    #decryption
-    leaCBC = CBC(False, dec,iv, True)
-    pt = leaCBC.update(ct)
-    pt += leaCBC.final()
+    if len(sys.argv) < 3:
+        # output_file.close()
+        exit()
 
-    decrypt_output = pt.decode('utf8')
-    print(decrypt_output)
+    text = bytes.fromhex(sys.argv[2].strip())
+    key = bytes.fromhex(sys.argv[3].strip())
+
+    # output_file_name = os.path.splitext(os.path.basename(__file__))[0] + ".txt"
+    output_file_name = "output.txt"
+    output_file = open(output_file_name, "w")
+
+    output_file.write("LEA\n\n")
+
+    if "encrypt_block".startswith(sys.argv[1]):
+        ciphertext = encrypt_block(text, key)
+        output_file.write(
+            "encrypt_block({}, {}):\nEncrypted message: {}\n\n".format(text, key, ciphertext))
+        output_file.write(
+            "encrypt_block({}, {}):\nEncrypted message: {}\n".format(text.hex(), key.hex(), ciphertext.hex()))
+        print_array_bit_diff_column(text, ciphertext)
+        print(ciphertext.hex(), end="")
+    elif "decrypt_block".startswith(sys.argv[1]):
+        plaintext = decrypt_block(text, key)
+        output_file.write(
+            "decrypt_block({}, {}):\nDecrypted message: {}\n\n".format(text, key, plaintext))
+        output_file.write(
+            "decrypt_block({}, {}):\nDecrypted message: {}\n".format(text.hex(), key.hex(), plaintext.hex()))
+        print_array_bit_diff_column(text, plaintext)
+        print(plaintext.hex(), end="")
+    elif "encrypt_ecb".startswith(sys.argv[1]):
+        ciphertext = encrypt_ecb(text, key)
+        output_file.write(
+            "encrypt_ecb({}, {}):\nEncrypted message: {}\n\n".format(text, key, ciphertext))
+        output_file.write(
+            "encrypt_ecb({}, {}):\nEncrypted message: {}\n".format(text.hex(), key.hex(), ciphertext.hex()))
+        print_array_bit_diff_column(text, ciphertext)
+        print(ciphertext.hex(), end="")
+    elif "decrypt_ecb".startswith(sys.argv[1]):
+        plaintext = decrypt_ecb(text, key)
+        output_file.write(
+            "decrypt_ecb({}, {}):\nDecrypted message: {}\n\n".format(text, key, plaintext))
+        output_file.write(
+            "decrypt_ecb({}, {}):\nDecrypted message: {}\n".format(text.hex(), key.hex(), plaintext.hex()))
+        print_array_bit_diff_column(text, plaintext)
+        print(plaintext.hex(), end="")
+    elif "encrypt_ctr".startswith(sys.argv[1]):
+        iv = bytes.fromhex(sys.argv[4].strip())
+        ciphertext = encrypt_ctr(text, key, iv)
+        output_file.write(
+            "encrypt_ctr({}, {}, {}):\nEncrypted message: {}\n\n".format(text, key, iv, ciphertext))
+        output_file.write(
+            "encrypt_ctr({}, {}, {}):\nEncrypted message: {}\n".format(text.hex(), key.hex(), iv.hex(), ciphertext.hex()))
+        print_array_bit_diff_column(text, ciphertext)
+        print(ciphertext.hex(), end="")
+    elif "decrypt_ctr".startswith(sys.argv[1]):
+        iv = bytes.fromhex(sys.argv[4].strip())
+        plaintext = decrypt_ctr(text, key, iv)
+        output_file.write(
+            "decrypt_ctr({}, {}, {}):\nDecrypted message: {}\n\n".format(text, key, iv, plaintext))
+        output_file.write(
+            "decrypt_ctr({}, {}, {}):\nDecrypted message: {}\n".format(text.hex(), key.hex(), iv.hex(), plaintext.hex()))
+        print_array_bit_diff_column(text, plaintext)
+        print(plaintext.hex(), end="")
+    output_file.close()
+
+# python3 lea.py encrypt_block <plaintext> <key>
+# python3 lea.py encrypt_block 41545441434b204154204441574e2101 534f4d452031323820424954204b4559
+#                              "ATTACK AT DAWN!\x01"             "SOME 128 BIT KEY"
+
+# python3 lea.py decrypt_block <ciphertext> <key>
+# python3 lea.py decrypt_block 7d354e8b1dc429a300abac87c050951a 534f4d452031323820424954204b4559
+#                                  <ciphertext>                  "SOME 128 BIT KEY"
+
+# python3 lea.py encrypt_ecb 41545441434b204154204441574e2101 534f4d452031323820424954204b4559
+# python3 lea.py decrypt_ecb 7d354e8b1dc429a300abac87c050951a3485873e087a21ed908331410fcb2fe4 534f4d452031323820424954204b4559
+
+# python3 lea.py encrypt_ctr 41545441434b204154204441574e2101 534f4d452031323820424954204b4559 00000000000000000000000000000000
+# python3 lea.py decrypt_ctr f2ff3999c8a82dd91e952d830853ca88 534f4d452031323820424954204b4559 00000000000000000000000000000000
