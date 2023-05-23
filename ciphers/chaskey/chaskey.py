@@ -41,10 +41,10 @@ https://asecuritysite.com/light/chas2
 
 import struct
 import binascii
-debugk       = 0
-debugm = 0
-debugst = 0
-debugstfinal = 0
+debugk       = 1
+debugm = 1
+debugst = 1
+debugstfinal = 1
 
 _block = struct.Struct('<L')
 _fourblock = struct.Struct('<LLLL')
@@ -56,6 +56,8 @@ _mask = 0xffffffff
 def _doublekey(k):
     '''in: k
        out: 2k'''
+    output_file.write("_doublekey(k: {})\n".format(k))
+    output_file.write("_doublekey(k: {:08X} {:08X} {:08X} {:08X})\n\n".format(*k))
     k0, k1, k2, k3 = k
     carry, = _block.unpack(_C[k3 >> 31])
     l0 = ((k0 & 0x7fffffff) << 1) ^ carry
@@ -68,9 +70,16 @@ def _doublekey(k):
 def _keygen(k):
     '''in: k packed
        out: k,2k,4k unpacked'''
+    output_file.write("_keygen(k: {})\n".format(k))
+    output_file.write("_keygen(k: {})\n\n".format(k.hex()))
     key = _fourblock.unpack(k)
     key1 = _doublekey(key)
     key2 = _doublekey(key1)
+
+    output_file.write("Key   : {:08X} {:08X} {:08X} {:08X})\n".format(*key))
+    output_file.write("Key 1 : {:08X} {:08X} {:08X} {:08X})\n".format(*key1))
+    output_file.write("Key 2 : {:08X} {:08X} {:08X} {:08X})\n\n".format(*key2))
+
     if debugk:
         print("  key:       %08x %08x %08x %08x" % key)
         print("2 key:       %08x %08x %08x %08x" % key1)
@@ -81,12 +90,14 @@ def _keygen(k):
 def _rotl(a, i):
     '''in: state chunk a
        out: a left-rotated by i bits'''
+    output_file.write("_rotl(a: {:08X}, i: {})\n".format(a, i))
     return (((a << i) & _mask) | (a >> (32-i)))
 
 
 def _chaskeyround(st):
     '''in:  state st
        out: updated state after round'''
+    output_file.write("_chaskeyround(st: {:08X} {:08X} {:08X} {:08X})\n".format(*st))
     st0, st1, st2, st3 = st
     st0 = (st0 + st1) & _mask
     st1 = _rotl(st1, 5) ^ st0
@@ -105,28 +116,37 @@ def _chaskeyround(st):
 def _chaskeypermute(st):
     '''in:  state st
        out: updated state after permutation'''
+    output_file.write("_chaskeypermute(st: {:08X} {:08X} {:08X} {:08X})\n\n".format(*st))
     st = _chaskeyround(st)
+    output_file.write("Round 1 -> st: {:08X} {:08X} {:08X} {:08X}\n\n".format(*st))
     if debugst:
         print("st round1:   %08x %08x %08x %08x" % st)
     st = _chaskeyround(st)
+    output_file.write("Round 2 -> st: {:08X} {:08X} {:08X} {:08X}\n\n".format(*st))
     if debugst:
         print("st round2:   %08x %08x %08x %08x" % st)
     st = _chaskeyround(st)
+    output_file.write("Round 3 -> st: {:08X} {:08X} {:08X} {:08X}\n\n".format(*st))
     if debugst:
         print("st round3:   %08x %08x %08x %08x" % st)
     st = _chaskeyround(st)
+    output_file.write("Round 4 -> st: {:08X} {:08X} {:08X} {:08X}\n\n".format(*st))
     if debugst:
         print("st round4:   %08x %08x %08x %08x" % st)
     st = _chaskeyround(st)
+    output_file.write("Round 5 -> st: {:08X} {:08X} {:08X} {:08X}\n\n".format(*st))
     if debugst:
         print("st round5:   %08x %08x %08x %08x" % st)
     st = _chaskeyround(st)
+    output_file.write("Round 6 -> st: {:08X} {:08X} {:08X} {:08X}\n\n".format(*st))
     if debugst:
         print("st round6:   %08x %08x %08x %08x" % st)
     st = _chaskeyround(st)
+    output_file.write("Round 7 -> st: {:08X} {:08X} {:08X} {:08X}\n\n".format(*st))
     if debugst:
         print("st round7:   %08x %08x %08x %08x" % st)
     st = _chaskeyround(st)
+    output_file.write("Round 8 -> st: {:08X} {:08X} {:08X} {:08X}\n\n".format(*st))
     if debugst:
         print("st round8:   %08x %08x %08x %08x" % st)
     return st
@@ -148,6 +168,8 @@ class chaskey:
         # blen = number of chars that can be processed
         # note: if len(msg)%16==0, a full block should remain for finalization
         st = self.st
+        output_file.write("Message length: {:2d}\n".format(len(msg)))
+        output_file.write("State: {:08X} {:08X} {:08X} {:08X}\n\n".format(*st))
         if debugm:
             print("message length %02d" % len(msg))
         if debugst:
@@ -155,9 +177,11 @@ class chaskey:
 
         for i in range(0, blen, 16):
             m = _fourblock.unpack_from(msg, i)
+            output_file.write("Compress m: {:08X} {:08X} {:08X} {:08X}\n".format(*m))
             if debugm:
                 print("compress m:  %08x %08x %08x %08x" % m)
             st = st[0] ^ m[0], st[1] ^ m[1], st[2] ^ m[2], st[3] ^ m[3]
+            output_file.write("State: {:08X} {:08X} {:08X} {:08X}\n\n".format(*st))
             if debugst:
                 print("st:          %08x %08x %08x %08x" % st)
             st = _chaskeypermute(st)
@@ -178,13 +202,16 @@ class chaskey:
             k = self.key2
             m = _fourblock.unpack_from(self.msg+b'\x01'+_zeroes)
 
+        output_file.write("Last m: {:08X} {:08X} {:08X} {:08X}\n".format(*m))
         if debugm:
             print("last m:      %08x %08x %08x %08x" % m)
         st = st[0] ^ k[0] ^ m[0], st[1] ^ k[1] ^ m[1], st[2] ^ k[2] ^ m[2], st[3] ^ k[3] ^ m[3]
+        output_file.write("State: {:08X} {:08X} {:08X} {:08X}\n\n".format(*st))
         if debugst:
             print("st:          %08x %08x %08x %08x" % st)
         st = _chaskeypermute(st)
         st = st[0] ^ k[0], st[1] ^ k[1], st[2] ^ k[2], st[3] ^ k[3]
+        output_file.write("Final state: {:08X} {:08X} {:08X} {:08X}\n\n".format(*st))
         if debugstfinal:
             print("st final:    %08x %08x %08x %08x" % st)
 
