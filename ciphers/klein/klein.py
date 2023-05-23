@@ -83,38 +83,136 @@ class KLEIN(object):
         return state
 
 
-if __name__ == '__main__':
-    import klein
-    import binascii
+def print_msg_box(msg, indent=0, align=1, width=None, title=None):
+    lines = msg.split("\n")
+    space = " " * align
 
-    key = 0xFFFFFFFFFFFFFFFF
+    if not width:
+        width = max(map(len, lines))
 
-    key = "Test"
-    plaintext = "Hello"
+    buf = f"{' ' * indent}+{'-' * (width + align * 2)}+\n"
 
-    k = int(binascii.hexlify(key.encode()), 16)
-    m = int(binascii.hexlify(plaintext.encode()), 16)
+    if title:
+        buf += f"{' ' * indent}|{space}{title:<{width}}{space}|\n"
+        buf += f"{' ' * indent}|{space}{'-' * len(title):<{width}}{space}|\n"
 
-    # Test for klein64
-    # k=0xFFFFFFFFFFFFFFFF
-    # m=0x0000000000000000 # Cipher 0x6456764e8602e154
+    buf += "".join([f"{' ' * indent}|{space}{line:<{width}}{space}|\n" for line in lines])
 
-    # Test for klein80
-    # k=0xFFFFFFFFFFFFFFFFFFFF
-    # m=0x0000000000000000 # Cipher 0x82247502273DCC5F
+    buf += f"{' ' * indent}+{'-' * (width + align * 2)}+\n"
 
-    # Test for klein96
-    # k=0xFFFFFFFFFFFFFFFFFFFFFFFF
-    # m=0x0000000000000000 # Cipher 0x15A3A03386A7FEC6
+    output_file.write(buf)
 
-    klein64 = klein.KLEIN(nr=12, size=64)  # 64-bit encryption key
-    klein80 = klein.KLEIN(nr=16, size=80)
-    klein96 = klein.KLEIN(nr=20, size=96)
 
-    k64 = klein64.encrypt(k, m)
-    k80 = klein80.encrypt(k, m)
-    k96 = klein96.encrypt(k, m)
+def print_array_bit_diff_column(array_1, array_2, indent=0, column=8, hex=True):
+    assert isinstance(array_1, list) or isinstance(
+        array_1, bytes), f"\"{array_1}\" is not array or bytes!"
+    length_a1 = len(array_1)
 
-    print("KLEIN64 (NR=12, Size=64):\t", hex(k64))
-    print("KLEIN80 (NR=16, Size=80):\t", hex(k80))
-    print("KLEIN96 (NR=20, Size=96):\t", hex(k96))
+    assert isinstance(array_2, list) or isinstance(
+        array_2, bytes), f"\"{array_2}\" is not array or bytes!"
+    length_a2 = len(array_2)
+
+    assert column > 0, f"column number can not be: {column}"
+
+    if length_a1 > length_a2:
+        length_max = length_a1
+        length_min = length_a2
+    else:
+        length_min = length_a1
+        length_max = length_a2
+
+    if length_max == 0:
+        return
+
+    buf = ""
+    count = 0
+
+    for index in range(0, length_max, column):
+        buf += " " * indent
+        buf += ("+--------" + "---" * (1 if hex else 0)) * (column if index+column <=
+                                                            length_max else length_max - index) + "+" * (1 if length_max > 0 else 0) + "\n"
+
+        if index < length_a1:
+            buf += " " * (indent+1)
+            for cell in range(index, (index+column) if (index+column) <= length_a1 else length_a1):
+                if hex:
+                    buf += "{:02X}:".format(array_1[cell])
+                buf += "{:08b} ".format(array_1[cell])
+        buf += "\n"
+
+        if index < length_a2:
+            buf += " " * (indent+1)
+            for cell in range(index, (index+column) if (index+column) <= length_a2 else length_a2):
+                if hex:
+                    buf += "{:02X}:".format(array_2[cell])
+                buf += "{:08b} ".format(array_2[cell])
+        buf += "\n"
+
+        buf += " " * indent
+        buf += ("+--------" + "---" * (1 if hex else 0)) * (column if index+column <=
+                                                            length_max else length_max - index) + "+" * (1 if length_max > 0 else 0) + "\n"
+
+        buf += " " * (indent+1)
+        for cell_index in range(index, (index+column) if (index+column) <= length_max else length_max):
+            diff = (array_1[cell_index] if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
+                array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index])))
+            while diff:
+                count += diff & 1
+                diff >>= 1
+            if hex:
+                buf += "{:02X}:".format(((array_1[cell_index]) if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
+                    array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index]))))
+            buf += "{:08b} ".format(((array_1[cell_index]) if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
+                array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index])))).replace("0", "-").replace("1", "X")
+        buf += "\n"
+
+        buf += " " * indent
+        buf += ("+--------" + "---" * (1 if hex else 0)) * (column if index+column <=
+                                                            length_max else length_max - index) + "+" * (1 if length_max > 0 else 0) + "\n"
+        buf += "\n"
+
+    output_file.write(buf)
+
+    print_msg_box("Bit difference: {}".format(count), indent)
+    output_file.write("\n")
+
+
+def encrypt(plaintext, key):
+    output_file.write("encrypt({}, {})\n".format(plaintext, key))
+    output_file.write("encrypt({}, {})\n\n".format(plaintext.hex(), key.hex()))
+
+    k = int.from_bytes(key, byteorder='big', signed=False)
+    m = int.from_bytes(plaintext, byteorder='big', signed=False)
+    mac = KLEIN(nr=12, size=64).encrypt(k, m)
+
+    return mac.to_bytes((mac.bit_length() + 7) // 8, byteorder='big', signed=False)
+
+
+if __name__ == "__main__":
+    import sys
+    import os
+
+    if len(sys.argv) < 3:
+        # output_file.close()
+        exit()
+
+    text = bytes.fromhex(sys.argv[2].strip())
+    key = bytes.fromhex(sys.argv[3].strip())
+    # text = sys.argv[2].strip()
+    # key = sys.argv[3].strip()
+
+    # output_file_name = os.path.splitext(os.path.basename(__file__))[0] + ".txt"
+    output_file_name = "output.txt"
+    output_file = open(output_file_name, "w")
+
+    output_file.write("Chaskey\n\n")
+
+    if "encrypt".startswith(sys.argv[1]):
+        ciphertext = encrypt(text, key)
+        output_file.write(
+            "encrypt({}, {}):\nEncrypted message: {}\n\n".format(text, key, ciphertext))
+        output_file.write(
+            "encrypt({}, {}):\nEncrypted message: {}\n".format(text.hex(), key.hex(), ciphertext.hex()))
+        print_array_bit_diff_column(text, ciphertext)
+        print(ciphertext.hex(), end="")
+    output_file.close()

@@ -420,7 +420,7 @@ class CipherScope(customtkinter.CTk):
         else:
             self.info_frame.grid_forget()
 
-        if "aes" == name:
+        if "aes" == name or "hight" == name or "itubee" == name or "lea" == name or "led" == name or "midori" == name:
             self.cipher = name
 
             self.cipher_pre_whitening_input_entry.grid_forget()
@@ -428,6 +428,9 @@ class CipherScope(customtkinter.CTk):
 
             self.cipher_frame.grid_rowconfigure(3, weight=0)
             self.cipher_frame.grid_rowconfigure(2, weight=1)
+
+            self.cipher_transform_optionmenu.configure(state="normal")
+            self.cipher_mode_optionmenu.configure(state="normal")
 
             self.cipher_mode_optionmenu.grid(pady=(10, 20))
 
@@ -444,11 +447,45 @@ class CipherScope(customtkinter.CTk):
             self.cipher_text_output_entry.grid(row=3)
 
             self.cipher_frame.grid(row=0, column=1, sticky="nsew")
+        elif "chaskey" == name or "klein" == name:
+            self.cipher = name
+
+            self.cipher_pre_whitening_input_entry.grid_forget()
+            self.cipher_post_whitening_input_entry.grid_forget()
+
+            self.cipher_frame.grid_rowconfigure(3, weight=0)
+            self.cipher_frame.grid_rowconfigure(2, weight=1)
+
+            self.cipher_transform_optionmenu.set("Encrypt")
+            self.cipher_transform_optionmenu.configure(state="disabled")
+
+            self.cipher_mode_optionmenu.grid(pady=(10, 20))
+
+            if "CTR" == self.cipher_mode_optionmenu.get():
+                self.cipher_key_input_entry.grid(columnspan=1, pady=(10, 20))
+                self.cipher_iv_input_entry.grid(pady=(10, 20))
+            else:
+                self.cipher_key_input_entry.grid(columnspan=2, pady=(10, 20))
+
+            self.cipher_mode_optionmenu.set("Block")
+            self.change_cipher_mode_optionmenu_event("Block")
+            self.cipher_mode_optionmenu.configure(state="disabled")
+
+            self.cipher_start_button.grid(pady=(10, 20))
+
+            self.cipher_textbox.grid(row=2)
+            self.cipher_output_entrymode_button.grid(row=3)
+            self.cipher_text_output_entry.grid(row=3)
+
+            self.cipher_frame.grid(row=0, column=1, sticky="nsew")
         elif "desxl" == name:
             self.cipher = name
 
             self.cipher_frame.grid_rowconfigure(2, weight=0)
             self.cipher_frame.grid_rowconfigure(3, weight=1)
+
+            self.cipher_transform_optionmenu.configure(state="normal")
+            self.cipher_mode_optionmenu.configure(state="normal")
 
             self.cipher_mode_optionmenu.grid(pady=(10, 10))
 
@@ -468,126 +505,6 @@ class CipherScope(customtkinter.CTk):
             self.cipher_textbox.grid(row=3)
             self.cipher_output_entrymode_button.grid(row=4)
             self.cipher_text_output_entry.grid(row=4)
-
-            self.cipher_frame.grid(row=0, column=1, sticky="nsew")
-        elif "hight" == name:
-            self.cipher = name
-
-            self.cipher_pre_whitening_input_entry.grid_forget()
-            self.cipher_post_whitening_input_entry.grid_forget()
-
-            self.cipher_frame.grid_rowconfigure(3, weight=0)
-            self.cipher_frame.grid_rowconfigure(2, weight=1)
-
-            self.cipher_mode_optionmenu.grid(pady=(10, 20))
-
-            if "CTR" == self.cipher_mode_optionmenu.get():
-                self.cipher_key_input_entry.grid(columnspan=1, pady=(10, 20))
-                self.cipher_iv_input_entry.grid(pady=(10, 20))
-            else:
-                self.cipher_key_input_entry.grid(columnspan=2, pady=(10, 20))
-
-            self.cipher_start_button.grid(pady=(10, 20))
-
-            self.cipher_textbox.grid(row=2)
-            self.cipher_output_entrymode_button.grid(row=3)
-            self.cipher_text_output_entry.grid(row=3)
-
-            self.cipher_frame.grid(row=0, column=1, sticky="nsew")
-        elif "itubee" == name:
-            self.cipher = name
-
-            self.cipher_pre_whitening_input_entry.grid_forget()
-            self.cipher_post_whitening_input_entry.grid_forget()
-
-            self.cipher_frame.grid_rowconfigure(3, weight=0)
-            self.cipher_frame.grid_rowconfigure(2, weight=1)
-
-            self.cipher_mode_optionmenu.grid(pady=(10, 20))
-
-            if "CTR" == self.cipher_mode_optionmenu.get():
-                self.cipher_key_input_entry.grid(columnspan=1, pady=(10, 20))
-                self.cipher_iv_input_entry.grid(pady=(10, 20))
-            else:
-                self.cipher_key_input_entry.grid(columnspan=2, pady=(10, 20))
-
-            self.cipher_start_button.grid(pady=(10, 20))
-
-            self.cipher_textbox.grid(row=2)
-            self.cipher_output_entrymode_button.grid(row=3)
-            self.cipher_text_output_entry.grid(row=3)
-
-            self.cipher_frame.grid(row=0, column=1, sticky="nsew")
-        elif "lea" == name:
-            self.cipher = name
-
-            self.cipher_pre_whitening_input_entry.grid_forget()
-            self.cipher_post_whitening_input_entry.grid_forget()
-
-            self.cipher_frame.grid_rowconfigure(3, weight=0)
-            self.cipher_frame.grid_rowconfigure(2, weight=1)
-
-            self.cipher_mode_optionmenu.grid(pady=(10, 20))
-
-            if "CTR" == self.cipher_mode_optionmenu.get():
-                self.cipher_key_input_entry.grid(columnspan=1, pady=(10, 20))
-                self.cipher_iv_input_entry.grid(pady=(10, 20))
-            else:
-                self.cipher_key_input_entry.grid(columnspan=2, pady=(10, 20))
-
-            self.cipher_start_button.grid(pady=(10, 20))
-
-            self.cipher_textbox.grid(row=2)
-            self.cipher_output_entrymode_button.grid(row=3)
-            self.cipher_text_output_entry.grid(row=3)
-
-            self.cipher_frame.grid(row=0, column=1, sticky="nsew")
-        elif "led" == name:
-            self.cipher = name
-
-            self.cipher_pre_whitening_input_entry.grid_forget()
-            self.cipher_post_whitening_input_entry.grid_forget()
-
-            self.cipher_frame.grid_rowconfigure(3, weight=0)
-            self.cipher_frame.grid_rowconfigure(2, weight=1)
-
-            self.cipher_mode_optionmenu.grid(pady=(10, 20))
-
-            if "CTR" == self.cipher_mode_optionmenu.get():
-                self.cipher_key_input_entry.grid(columnspan=1, pady=(10, 20))
-                self.cipher_iv_input_entry.grid(pady=(10, 20))
-            else:
-                self.cipher_key_input_entry.grid(columnspan=2, pady=(10, 20))
-
-            self.cipher_start_button.grid(pady=(10, 20))
-
-            self.cipher_textbox.grid(row=2)
-            self.cipher_output_entrymode_button.grid(row=3)
-            self.cipher_text_output_entry.grid(row=3)
-
-            self.cipher_frame.grid(row=0, column=1, sticky="nsew")
-        elif "midori" == name:
-            self.cipher = name
-
-            self.cipher_pre_whitening_input_entry.grid_forget()
-            self.cipher_post_whitening_input_entry.grid_forget()
-
-            self.cipher_frame.grid_rowconfigure(3, weight=0)
-            self.cipher_frame.grid_rowconfigure(2, weight=1)
-
-            self.cipher_mode_optionmenu.grid(pady=(10, 20))
-
-            if "CTR" == self.cipher_mode_optionmenu.get():
-                self.cipher_key_input_entry.grid(columnspan=1, pady=(10, 20))
-                self.cipher_iv_input_entry.grid(pady=(10, 20))
-            else:
-                self.cipher_key_input_entry.grid(columnspan=2, pady=(10, 20))
-
-            self.cipher_start_button.grid(pady=(10, 20))
-
-            self.cipher_textbox.grid(row=2)
-            self.cipher_output_entrymode_button.grid(row=3)
-            self.cipher_text_output_entry.grid(row=3)
 
             self.cipher_frame.grid(row=0, column=1, sticky="nsew")
         else:
@@ -868,7 +785,10 @@ class CipherScope(customtkinter.CTk):
         exec_output_file_name = "output.txt"
 
         cipher_transform = self.cipher_transform_optionmenu.get(
-        ).lower() + "_" + self.cipher_mode_optionmenu.get().lower()
+        ).lower()
+
+        if not "chaskey" == exec_cipher and not "klein" == exec_cipher:
+            cipher_transform += "_" + self.cipher_mode_optionmenu.get().lower()
 
         exec_command = []
         if sys.platform.startswith("win"):
