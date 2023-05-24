@@ -158,23 +158,23 @@ def inc_bytes(a):
 
 
 def pad(plaintext):
-    output_file.write("pad({})\n".format(plaintext.hex()))
     """
     Pads the given plaintext with PKCS#7 padding to a multiple of 16 bytes.
     Note that if the plaintext size is a multiple of 16,
     a whole block will be added.
     """
+    output_file.write("pad({})\n".format(plaintext.hex()))
     padding_len = 16 - (len(plaintext) % 16)
     padding = bytes([padding_len] * padding_len)
     return plaintext + padding
 
 
 def unpad(plaintext):
-    output_file.write("unpad({})\n".format(plaintext.hex()))
     """
     Removes a PKCS#7 padding, returning the unpadded text and ensuring the
     padding was correct.
     """
+    output_file.write("unpad({})\n".format(plaintext.hex()))
     padding_len = plaintext[-1]
     assert padding_len > 0
     message, padding = plaintext[:-padding_len], plaintext[-padding_len:]

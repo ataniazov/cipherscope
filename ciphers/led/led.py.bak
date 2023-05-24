@@ -501,4 +501,11 @@ print(decrypt(b'DHRUVDES', encrypt(b'DHRUVDES', b'DHRUVDESHMUKH\0\0\0',
       mode='ctr', key_size=16), mode='ctr', key_size=16))
 print(encrypt(b'DHRUVDES', b'DHRUVDESHMUKH\0\0\0', mode='ctr', key_size=16))
 
+print(encrypt(b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00', b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00', mode='ctr', key_size=8).hex())
+print(encrypt(b'0000000000000000', b'0000000000000000', mode='ebc', key_size=8).hex())
+
+print(LED(b'\x00\x00\x00\x00\x00\x00\x00\x00').encrypt_block(b'\x00\x00\x00\x00\x00\x00\x00\x00').hex())
+
+
+
 # print(led.decrypt_block(led.encrypt_block(b'DHRUVDES')))

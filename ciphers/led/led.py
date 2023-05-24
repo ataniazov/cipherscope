@@ -46,6 +46,7 @@ def xor_bytes(a, b):
 
 def inc_bytes(a):
     """ Returns a new byte array with the value increment by 1 """
+    output_file.write("inc_bytes(a: {})\n".format(a.hex()))
     out = list(a)
     for i in reversed(range(len(out))):
         if out[i] == 0xFF:
@@ -57,36 +58,43 @@ def inc_bytes(a):
 
 
 def sub_cells(s):
+    output_file.write("sub_cells(s: {})\n".format(s))
     for i in range(4):
         for j in range(4):
             s[i][j] = S_BOX[s[i][j]]
 
 
 def inv_sub_cells(s):
+    output_file.write("inv_sub_cells(s: {})\n".format(s))
     for i in range(4):
         for j in range(4):
             s[i][j] = S_BOX_INV[s[i][j]]
 
 
 def shift_rows(s):
+    output_file.write("shift_rows(s: {})\n".format(s))
     s[1][0], s[1][1], s[1][2], s[1][3] = s[1][1], s[1][2], s[1][3], s[1][0]
     s[2][0], s[2][1], s[2][2], s[2][3] = s[2][2], s[2][3], s[2][0], s[2][1]
     s[3][0], s[3][1], s[3][2], s[3][3] = s[3][3], s[3][0], s[3][1], s[3][2]
 
 
 def inv_shift_rows(s):
+    output_file.write("inv_shift_rows(s: {})\n".format(s))
     s[1][0], s[1][1], s[1][2], s[1][3] = s[1][3], s[1][0], s[1][1], s[1][2]
     s[2][0], s[2][1], s[2][2], s[2][3] = s[2][2], s[2][3], s[2][0], s[2][1]
     s[3][0], s[3][1], s[3][2], s[3][3] = s[3][1], s[3][2], s[3][3], s[3][0]
 
 
 def add_round_key(s, k):
+    output_file.write("inv_shift_rows(s: {}, k: {})\n".format(s, k))
     for i in range(4):
         for j in range(4):
             s[i][j] ^= k[i][j]
 
 
 def add_constants(s, key_size, rn):
+    output_file.write(
+        "add_constants(s: {}, key_size: {}, rn: {})\n".format(s, key_size, rn))
     msb_k = (key_size & 0xF0) >> 4
     lsb_k = key_size & 0x0F
     msb_rc = (R_CON[rn] & 0x38) >> 3
@@ -101,6 +109,7 @@ def add_constants(s, key_size, rn):
 
 
 def mix_columns_serial(s):
+    output_file.write("mix_columns_serial(s: {})\n".format(s))
     ans = np.matmul(GF16(MIX_MATRIX), GF16(s))
     for i in range(4):
         for j in range(4):
@@ -108,6 +117,7 @@ def mix_columns_serial(s):
 
 
 def inv_mix_columns_serial(s):
+    output_file.write("inv_mix_columns_serial(s: {})\n".format(s))
     ans = np.matmul(MIX_MATRIX_INV, GF16(s))
     for i in range(4):
         for j in range(4):
@@ -120,6 +130,7 @@ def pad(plaintext):
     Note that if the plaintext size is a multiple of 16,
     a whole block will be added.
     """
+    output_file.write("pad({})\n".format(plaintext.hex()))
     padding_len = 8 - (len(plaintext) % 8)
     padding = bytes([padding_len] * padding_len)
     return plaintext + padding
@@ -130,6 +141,7 @@ def unpad(plaintext):
     Removes a PKCS#7 padding, returning the unpadded text and ensuring the
     padding was correct.
     """
+    output_file.write("unpad({})\n".format(plaintext.hex()))
     padding_len = plaintext[-1]
     assert padding_len > 0
     message, padding = plaintext[:-padding_len], plaintext[-padding_len:]
@@ -138,6 +150,7 @@ def unpad(plaintext):
 
 
 def split_blocks(message, block_size=8, require_padding=True):
+    output_file.write("split_blocks({})\n".format(message.hex()))
     assert len(message) % block_size == 0 or not require_padding
     return [message[i:i+block_size] for i in range(0, len(message), block_size)]
 
@@ -146,6 +159,8 @@ class LED:
     rounds_by_key_size = {8: 8, 16: 12}
 
     def __init__(self, master_key):
+        output_file.write(
+            "__init__(master_key: {})\n".format(master_key.hex()))
         self.__master_key = master_key
         self.n_rounds = LED.rounds_by_key_size[len(master_key)]
         self.key_schedule()
@@ -389,6 +404,31 @@ class LED:
 
         return b''.join(blocks)
 
+    def encrypt_ecb(self, plaintext):
+        """
+        Encrypts `plaintext` using ECB mode and PKCS#7 padding.
+        """
+        plaintext = pad(plaintext)
+
+        blocks = []
+        for plaintext_block in split_blocks(plaintext):
+            # ECB mode encrypt: encrypt(plaintext_block)
+            blocks.append(self.encrypt_block(plaintext_block))
+
+        return b''.join(blocks)
+
+    def decrypt_ecb(self, ciphertext):
+        """
+        Decrypts `ciphertext` using ECB mode and PKCS#7 padding.
+        """
+
+        blocks = []
+        for ciphertext_block in split_blocks(ciphertext):
+            # ECB mode decrypt: decrypt(ciphertext_block)
+            blocks.append(self.decrypt_block(ciphertext_block))
+
+        return unpad(b''.join(blocks))
+
     def encrypt_ctr(self, plaintext, iv):
         """
         Encrypts `plaintext` using CTR mode with the given nounce/IV.
@@ -421,67 +461,6 @@ class LED:
 
         return b''.join(blocks)
 
-
-# def encrypt(key, plaintext, mode='cbc', workload=100000, key_size=8):
-#     """
-#     Encrypts `plaintext` with `key` using LED, an HMAC to verify integrity,
-#     and PBKDF2 to stretch the given key.
-
-#     The exact algorithm is specified in the module docstring.
-#     """
-#     if isinstance(key, str):
-#         key = key.encode('utf-8')
-#     if isinstance(plaintext, str):
-#         plaintext = plaintext.encode('utf-8')
-
-#     salt = os.urandom(SALT_SIZE)
-#     key, hmac_key, iv = get_key_iv(key, salt, key_size, workload)
-#     ciphertext = LED(key).modes_dict[mode][0](plaintext, iv)
-#     hmac = new_hmac(hmac_key, salt + ciphertext, 'sha256').digest()
-#     assert len(hmac) == HMAC_SIZE
-
-#     return hmac + salt + ciphertext
-
-
-# def decrypt(key, ciphertext, mode='cbc', workload=100000, key_size=8):
-#     """
-#     Decrypts `ciphertext` with `key` using LED, an HMAC to verify integrity,
-#     and PBKDF2 to stretch the given key.
-
-#     The exact algorithm is specified in the module docstring.
-#     """
-
-#     assert len(
-#         ciphertext) % 8 == 0, "Ciphertext must be made of full 16-byte blocks."
-
-#     assert len(ciphertext) >= 16, """
-#     Ciphertext must be at least 32 bytes long (16 byte salt + 16 byte block). To
-#     encrypt or decrypt single blocks use `LED(key).decrypt_block(ciphertext)`.
-#     """
-
-#     if isinstance(key, str):
-#         key = key.encode('utf-8')
-
-#     hmac, ciphertext = ciphertext[:HMAC_SIZE], ciphertext[HMAC_SIZE:]
-#     salt, ciphertext = ciphertext[:SALT_SIZE], ciphertext[SALT_SIZE:]
-#     key, hmac_key, iv = get_key_iv(key, salt, key_size, workload)
-
-#     expected_hmac = new_hmac(hmac_key, salt + ciphertext, 'sha256').digest()
-#     assert compare_digest(
-#         hmac, expected_hmac), 'Ciphertext corrupted or tampered.'
-
-#     return LED(key).modes_dict[mode][1](ciphertext, iv)
-
-
-# # workload=100000
-# # salt = os.urandom(SALT_SIZE)
-# # key, hmac_key, iv = get_key_iv(b'DHRUVDESHMUKH\0\0\0', salt, workload)
-# # led = LED(key)
-# print(decrypt(b'DHRUVDES', encrypt(b'DHRUVDES', b'DHRUVDESHMUKH\0\0\0',
-#       mode='ctr', key_size=16), mode='ctr', key_size=16))
-# print(encrypt(b'DHRUVDES', b'DHRUVDESHMUKH\0\0\0', mode='ctr', key_size=16))
-
-# # print(led.decrypt_block(led.encrypt_block(b'DHRUVDES')))
 
 def print_msg_box(msg, indent=0, align=1, width=None, title=None):
     lines = msg.split("\n")
@@ -688,6 +667,7 @@ if __name__ == "__main__":
         print(plaintext.hex(), end="")
     output_file.close()
 
+
 # python3 led.py encrypt_block <plaintext> <key>
 # python3 led.py encrypt_block 41545441434b204154204441574e2101 534f4d452031323820424954204b4559
 #                              "ATTACK AT DAWN!\x01"             "SOME 128 BIT KEY"
@@ -701,3 +681,15 @@ if __name__ == "__main__":
 
 # python3 led.py encrypt_ctr 41545441434b204154204441574e2101 534f4d452031323820424954204b4559 00000000000000000000000000000000
 # python3 led.py decrypt_ctr f2ff3999c8a82dd91e952d830853ca88 534f4d452031323820424954204b4559 00000000000000000000000000000000
+
+
+# python3 led.py encrypt_block <plaintext> <key>
+# python3 led.py encrypt_block 0000000000000000 0000000000000000
+# Expected: 39c2401003A0c798
+# Result: d28bdc60bfa11ecf
+
+# Test vectors:
+# LED-64
+# <plaintext>       <key>             <ciphertext>      <result>
+# 0000000000000000  0000000000000000  39C2401003A0C798  d28bdc60bfa11ecf
+# 0123456789ABCDEF  0123456789ABCDEF  A003551E3893FC58  81be2de9ced7452d

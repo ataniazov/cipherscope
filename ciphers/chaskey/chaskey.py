@@ -41,10 +41,10 @@ https://asecuritysite.com/light/chas2
 
 import struct
 import binascii
-debugk       = 1
-debugm = 1
-debugst = 1
-debugstfinal = 1
+debugk       = 0
+debugm = 0
+debugst = 0
+debugstfinal = 0
 
 _block = struct.Struct('<L')
 _fourblock = struct.Struct('<LLLL')
