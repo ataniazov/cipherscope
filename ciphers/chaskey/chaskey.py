@@ -497,3 +497,8 @@ if __name__ == "__main__":
         print_array_bit_diff_column(text, ciphertext)
         print(ciphertext.hex(), end="")
     output_file.close()
+
+# Test Vectors:
+# Message: 68656c6c6f
+# Key: BD63710BAF4753D0367DBF6A875ACAAB
+# Signature: d01d582da818e0c116651bc3db6a5547

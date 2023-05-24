@@ -455,16 +455,23 @@ if __name__ == "__main__":
         print(plaintext.hex(), end="")
     output_file.close()
 
-# python3 itubee.py encrypt_block <plaintext> <key>
-# python3 itubee.py encrypt_block
-#                              "HelloWorld"             "SOME 80BIT"
+# python3 itubee.py encrypt_block  <plaintext>           <key>
+# python3 itubee.py encrypt_block  48656c6c6f576f726c64  534f4d45203830424954
+#                                      "HelloWorld"          "SOME 80BIT"
 
-# python3 itubee.py decrypt_block <ciphertext> <key>
-# python3 itubee.py decrypt_block
-#                                  <ciphertext>                  "SOME 80BIT"
+# python3 itubee.py decrypt_block  <ciphertext>          <key>
+# python3 itubee.py decrypt_block  602e1e5341163fa7c988  534f4d45203830424954
+#                                  <ciphertext>          "SOME 80BIT"
 
-# python3 itubee.py encrypt_ecb
-# python3 itubee.py decrypt_ecb
+# python3 itubee.py encrypt_ecb 48656c6c6f576f726c64 534f4d45203830424954
+# python3 itubee.py decrypt_ecb 602e1e5341163fa7c988018f59ba0677bffbe60b 534f4d45203830424954
 
-# python3 itubee.py encrypt_ctr
-# python3 itubee.py decrypt_ctr
+# python3 itubee.py encrypt_ctr 48656c6c6f576f726c64 534f4d45203830424954 00000000000000000000
+# python3 itubee.py decrypt_ctr 58de2cebe1088ea0db0d 534f4d45203830424954 00000000000000000000
+
+# Test Vectors:
+# Key
+# Plaintext            Key                  Ciphertext
+# 00000000000000000000 00000000000000000000 471330577984cbecf6c8
+# 01000000000000000000 00000000000000000080 761b8299b3f6a99f0838
+# 6925278951fbf3b25ccc c538bd9289822be43363 c42e0f48cd5a87d0055f

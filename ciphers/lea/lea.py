@@ -391,6 +391,55 @@ class LEA(object):
         return b''.join(blocks)
 
 
+def xor_bytes(a, b):
+    """ Returns a new byte array with the elements xor'ed. """
+    return bytes(i ^ j for i, j in zip(a, b))
+
+
+def inc_bytes(a):
+    """ Returns a new byte array with the value increment by 1 """
+    output_file.write("inc_bytes({})\n".format(a.hex()))
+    out = list(a)
+    for i in reversed(range(len(out))):
+        if out[i] == 0xFF:
+            out[i] = 0
+        else:
+            out[i] += 1
+            break
+    return bytes(out)
+
+
+def pad(plaintext):
+    """
+    Pads the given plaintext with PKCS#7 padding to a multiple of 16 bytes.
+    Note that if the plaintext size is a multiple of 16,
+    a whole block will be added.
+    """
+    output_file.write("pad({})\n".format(plaintext.hex()))
+    padding_len = 16 - (len(plaintext) % 16)
+    padding = bytes([padding_len] * padding_len)
+    return plaintext + padding
+
+
+def unpad(plaintext):
+    """
+    Removes a PKCS#7 padding, returning the unpadded text and ensuring the
+    padding was correct.
+    """
+    output_file.write("unpad({})\n".format(plaintext.hex()))
+    padding_len = plaintext[-1]
+    assert padding_len > 0
+    message, padding = plaintext[:-padding_len], plaintext[-padding_len:]
+    assert all(p == padding_len for p in padding)
+    return message
+
+
+def split_blocks(message, block_size=16, require_padding=True):
+    output_file.write("split_blocks({})\n".format(message.hex()))
+    assert len(message) % block_size == 0 or not require_padding
+    return [message[i:i+16] for i in range(0, len(message), block_size)]
+
+
 def encrypt_block(plaintext, key):
     output_file.write("encrypt_block({}, {})\n".format(plaintext, key))
     output_file.write("encrypt_block({}, {})\n\n".format(
@@ -507,11 +556,11 @@ if __name__ == "__main__":
 #                              "ATTACK AT DAWN!\x01"             "SOME 128 BIT KEY"
 
 # python3 lea.py decrypt_block <ciphertext> <key>
-# python3 lea.py decrypt_block 7d354e8b1dc429a300abac87c050951a 534f4d452031323820424954204b4559
+# python3 lea.py decrypt_block 4cb06ba701fac7c496d67d99dd820583 534f4d452031323820424954204b4559
 #                                  <ciphertext>                  "SOME 128 BIT KEY"
 
 # python3 lea.py encrypt_ecb 41545441434b204154204441574e2101 534f4d452031323820424954204b4559
-# python3 lea.py decrypt_ecb 7d354e8b1dc429a300abac87c050951a3485873e087a21ed908331410fcb2fe4 534f4d452031323820424954204b4559
+# python3 lea.py decrypt_ecb 4cb06ba701fac7c496d67d99dd820583be2c5abfc71b8ced8db9cf2e6500019a 534f4d452031323820424954204b4559
 
 # python3 lea.py encrypt_ctr 41545441434b204154204441574e2101 534f4d452031323820424954204b4559 00000000000000000000000000000000
-# python3 lea.py decrypt_ctr f2ff3999c8a82dd91e952d830853ca88 534f4d452031323820424954204b4559 00000000000000000000000000000000
+# python3 lea.py decrypt_ctr c074aac476bf7ea1265b085402c2f9b4 534f4d452031323820424954204b4559 00000000000000000000000000000000
