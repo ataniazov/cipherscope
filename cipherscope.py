@@ -778,7 +778,7 @@ class CipherScope(customtkinter.CTk):
             self.cipher_input_entrymode_button.set("Hex")
             self.change_cipher_input_entrymode_button_event("Hex")
 
-        ciphers_folder = "ciphers/"
+        ciphers_folder = "ciphers"
         exec_cipher = self.cipher
         exec_file = exec_cipher + ".py"
         # exec_output_file_name = exec_file.split(".")[0] + ".txt"
@@ -792,8 +792,7 @@ class CipherScope(customtkinter.CTk):
 
         exec_command = []
         if sys.platform.startswith("win"):
-            exec_command.extend(
-                ["python", ciphers_folder + exec_cipher + "\\" + exec_file])
+            exec_command.append("python")
             # exec_stdout = subprocess.check_output(["python", ciphers_folder + exec_cipher + "\\" +
             #                                       exec_file, cipher_transform, self.cipher_text_input_entry.get(), self.cipher_key_input_entry.get()])
             # exec_command = "python", ciphers_folder + exec_cipher + "\\" + \
@@ -805,8 +804,10 @@ class CipherScope(customtkinter.CTk):
             #     exec_file, cipher_transform, self.cipher_text_input_entry.get(
             #     ), self.cipher_key_input_entry.get()
         else:
-            exec_command.extend(
-                ["python3", ciphers_folder + exec_cipher + "/" + exec_file])
+            exec_command.append("python3")
+
+        exec_command.extend(
+            [ciphers_folder + "/" + exec_cipher + "/" + exec_file])
 
         exec_command.extend([cipher_transform, self.cipher_text_input_entry.get(
         ), self.cipher_key_input_entry.get()])
