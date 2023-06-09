@@ -420,7 +420,8 @@ class CipherScope(customtkinter.CTk):
         else:
             self.info_frame.grid_forget()
 
-        if "aes" == name or "hight" == name or "itubee" == name or "lea" == name or "led" == name or "midori" == name:
+        # if "aes" == name or "clefia" == name or "gost" == name or "hight" == name or "itubee" == name or "kasumi" == name or "katan" == name or "ktantan" == name or "lea" == name or "led" == name or "midori" == name:
+        if name in ["aes", "clefia", "gost", "hight", "itubee", "kasumi", "katan", "ktantan", "lea", "led", "midori"]:
             self.cipher = name
 
             self.cipher_pre_whitening_input_entry.grid_forget()
@@ -447,7 +448,8 @@ class CipherScope(customtkinter.CTk):
             self.cipher_text_output_entry.grid(row=3)
 
             self.cipher_frame.grid(row=0, column=1, sticky="nsew")
-        elif "chaskey" == name or "klein" == name:
+        # elif "chaskey" == name or "klein" == name:
+        elif name in ["chaskey", "klein"]:
             self.cipher = name
 
             self.cipher_pre_whitening_input_entry.grid_forget()
