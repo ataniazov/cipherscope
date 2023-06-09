@@ -222,22 +222,291 @@ class Kasumi:
         return (left << 32) | right
 
 
-if __name__ == '__main__':
-    key = 0x9900aabbccddeeff1122334455667788
-    text = 0xfedcba0987654321
-    print("Data is "+hex(text))
-    print("Key is "+hex(key))
+# if __name__ == '__main__':
+#     key = 0x9900aabbccddeeff1122334455667788
+#     text = 0xfedcba0987654321
+#     print("Data is "+hex(text))
+#     print("Key is "+hex(key))
 
-    my_kasumi = Kasumi()
-    my_kasumi.set_key(key)
+#     my_kasumi = Kasumi()
+#     my_kasumi.set_key(key)
 
-    encrypted = my_kasumi.enc(text)
-    print('encrypted', hex(encrypted))
+#     encrypted = my_kasumi.enc(text)
+#     print('encrypted', hex(encrypted))
 
-    for i in range(99):  # for testing
-        encrypted = my_kasumi.enc(encrypted)
-    for i in range(99):
-        encrypted = my_kasumi.dec(encrypted)
+#     for i in range(99):  # for testing
+#         encrypted = my_kasumi.enc(encrypted)
+#     for i in range(99):
+#         encrypted = my_kasumi.dec(encrypted)
 
-    decrypted = my_kasumi.dec(encrypted)
-    print('decrypted', hex(decrypted))
+#     decrypted = my_kasumi.dec(encrypted)
+#     print('decrypted', hex(decrypted))
+
+def xor_bytes(a, b):
+    """ Returns a new byte array with the elements xor'ed. """
+    return bytes(i ^ j for i, j in zip(a, b))
+
+
+def inc_bytes(a):
+    """ Returns a new byte array with the value increment by 1 """
+    output_file.write("inc_bytes({})\n".format(a.hex()))
+    out = list(a)
+    for i in reversed(range(len(out))):
+        if out[i] == 0xFF:
+            out[i] = 0
+        else:
+            out[i] += 1
+            break
+    return bytes(out)
+
+
+def pad(plaintext):
+    """
+    Pads the given plaintext with PKCS#7 padding to a multiple of 10 bytes.
+    Note that if the plaintext size is a multiple of 10,
+    a whole block will be added.
+    """
+    output_file.write("pad({})\n".format(plaintext.hex()))
+    padding_len = 10 - (len(plaintext) % 10)
+    padding = bytes([padding_len] * padding_len)
+    return plaintext + padding
+
+
+def unpad(plaintext):
+    """
+    Removes a PKCS#7 padding, returning the unpadded text and ensuring the
+    padding was correct.
+    """
+    output_file.write("unpad({})\n".format(plaintext.hex()))
+    padding_len = plaintext[-1]
+    assert padding_len > 0
+    message, padding = plaintext[:-padding_len], plaintext[-padding_len:]
+    assert all(p == padding_len for p in padding)
+    return message
+
+
+def split_blocks(message, block_size=10, require_padding=True):
+    assert len(message) % block_size == 0 or not require_padding
+    return [message[i:i+block_size] for i in range(0, len(message), block_size)]
+
+
+def print_msg_box(msg, indent=0, align=1, width=None, title=None):
+    lines = msg.split("\n")
+    space = " " * align
+
+    if not width:
+        width = max(map(len, lines))
+
+    buf = f"{' ' * indent}+{'-' * (width + align * 2)}+\n"
+
+    if title:
+        buf += f"{' ' * indent}|{space}{title:<{width}}{space}|\n"
+        buf += f"{' ' * indent}|{space}{'-' * len(title):<{width}}{space}|\n"
+
+    buf += "".join([f"{' ' * indent}|{space}{line:<{width}}{space}|\n" for line in lines])
+
+    buf += f"{' ' * indent}+{'-' * (width + align * 2)}+\n"
+
+    output_file.write(buf)
+
+
+def print_array_bit_diff_column(array_1, array_2, indent=0, column=8, hex=True):
+    assert isinstance(array_1, list) or isinstance(
+        array_1, bytes), f"\"{array_1}\" is not array or bytes!"
+    length_a1 = len(array_1)
+
+    assert isinstance(array_2, list) or isinstance(
+        array_2, bytes), f"\"{array_2}\" is not array or bytes!"
+    length_a2 = len(array_2)
+
+    assert column > 0, f"column number can not be: {column}"
+
+    if length_a1 > length_a2:
+        length_max = length_a1
+        length_min = length_a2
+    else:
+        length_min = length_a1
+        length_max = length_a2
+
+    if length_max == 0:
+        return
+
+    buf = ""
+    count = 0
+
+    for index in range(0, length_max, column):
+        buf += " " * indent
+        buf += ("+--------" + "---" * (1 if hex else 0)) * (column if index+column <=
+                                                            length_max else length_max - index) + "+" * (1 if length_max > 0 else 0) + "\n"
+
+        if index < length_a1:
+            buf += " " * (indent+1)
+            for cell in range(index, (index+column) if (index+column) <= length_a1 else length_a1):
+                if hex:
+                    buf += "{:02X}:".format(array_1[cell])
+                buf += "{:08b} ".format(array_1[cell])
+        buf += "\n"
+
+        if index < length_a2:
+            buf += " " * (indent+1)
+            for cell in range(index, (index+column) if (index+column) <= length_a2 else length_a2):
+                if hex:
+                    buf += "{:02X}:".format(array_2[cell])
+                buf += "{:08b} ".format(array_2[cell])
+        buf += "\n"
+
+        buf += " " * indent
+        buf += ("+--------" + "---" * (1 if hex else 0)) * (column if index+column <=
+                                                            length_max else length_max - index) + "+" * (1 if length_max > 0 else 0) + "\n"
+
+        buf += " " * (indent+1)
+        for cell_index in range(index, (index+column) if (index+column) <= length_max else length_max):
+            diff = (array_1[cell_index] if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
+                array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index])))
+            while diff:
+                count += diff & 1
+                diff >>= 1
+            if hex:
+                buf += "{:02X}:".format(((array_1[cell_index]) if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
+                    array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index]))))
+            buf += "{:08b} ".format(((array_1[cell_index]) if cell_index < length_a1 else (0xFF ^ (array_2[cell_index]))) ^ (
+                array_2[cell_index] if cell_index < length_a2 else (0xFF ^ (array_1[cell_index])))).replace("0", "-").replace("1", "X")
+        buf += "\n"
+
+        buf += " " * indent
+        buf += ("+--------" + "---" * (1 if hex else 0)) * (column if index+column <=
+                                                            length_max else length_max - index) + "+" * (1 if length_max > 0 else 0) + "\n"
+        buf += "\n"
+
+    output_file.write(buf)
+
+    print_msg_box("Bit difference: {}".format(count), indent)
+    output_file.write("\n")
+
+
+def encrypt_block(plaintext, key):
+    output_file.write("encrypt_block({}, {})\n".format(plaintext, key))
+    output_file.write("encrypt_block({}, {})\n\n".format(
+        plaintext.hex(), key.hex()))
+    return ITUbee().encrypt_block(plaintext.hex(), key.hex())
+
+
+def decrypt_block(ciphertext, key):
+    output_file.write("decrypt_block({}, {})\n".format(ciphertext, key))
+    output_file.write("decrypt_block({}, {})\n\n".format(
+        ciphertext.hex(), key.hex()))
+    return ITUbee().decrypt_block(ciphertext.hex(), key.hex())
+
+
+def encrypt_ecb(plaintext, key):
+    output_file.write("encrypt_ecb({}, {})\n".format(plaintext, key))
+    output_file.write("encrypt_ecb({}, {})\n\n".format(
+        plaintext.hex(), key.hex()))
+    return ITUbee().encrypt_ecb(plaintext, key)
+
+
+def decrypt_ecb(ciphertext, key):
+    output_file.write("decrypt_ecb({}, {})\n".format(ciphertext, key))
+    output_file.write("decrypt_ecb({}, {})\n\n".format(
+        ciphertext.hex(), key.hex()))
+    return ITUbee().decrypt_ecb(ciphertext, key)
+
+
+def encrypt_ctr(plaintext, key, iv):
+    output_file.write("encrypt_ctr({}, {}, {})\n".format(plaintext, key, iv))
+    output_file.write("encrypt_ctr({}, {}, {})\n\n".format(
+        plaintext.hex(), key.hex(), iv.hex()))
+    return ITUbee().encrypt_ctr(plaintext, key, iv)
+
+
+def decrypt_ctr(ciphertext, key, iv):
+    output_file.write("decrypt_ctr({}, {}, {})\n".format(ciphertext, key, iv))
+    output_file.write("decrypt_ctr({}, {}, {})\n\n".format(
+        ciphertext.hex(), key.hex(), iv.hex()))
+    return ITUbee().decrypt_ctr(ciphertext, key, iv)
+
+
+if __name__ == "__main__":
+    import sys
+    import os
+
+    if len(sys.argv) < 3:
+        # output_file.close()
+        exit()
+
+    text = bytes.fromhex(sys.argv[2].strip())
+    key = bytes.fromhex(sys.argv[3].strip())
+
+    # output_file_name = os.path.splitext(os.path.basename(__file__))[0] + ".txt"
+    output_file_name = "output.txt"
+    output_file = open(output_file_name, "w")
+
+    output_file.write("KASUMI\n\n")
+
+    if "encrypt_block".startswith(sys.argv[1]):
+        ciphertext = encrypt_block(text, key)
+        output_file.write(
+            "encrypt_block({}, {}):\nEncrypted message: {}\n\n".format(text, key, ciphertext))
+        output_file.write(
+            "encrypt_block({}, {}):\nEncrypted message: {}\n".format(text.hex(), key.hex(), ciphertext.hex()))
+        print_array_bit_diff_column(text, ciphertext)
+        print(ciphertext.hex(), end="")
+    elif "decrypt_block".startswith(sys.argv[1]):
+        plaintext = decrypt_block(text, key)
+        output_file.write(
+            "decrypt_block({}, {}):\nDecrypted message: {}\n\n".format(text, key, plaintext))
+        output_file.write(
+            "decrypt_block({}, {}):\nDecrypted message: {}\n".format(text.hex(), key.hex(), plaintext.hex()))
+        print_array_bit_diff_column(text, plaintext)
+        print(plaintext.hex(), end="")
+    elif "encrypt_ecb".startswith(sys.argv[1]):
+        ciphertext = encrypt_ecb(text, key)
+        output_file.write(
+            "encrypt_ecb({}, {}):\nEncrypted message: {}\n\n".format(text, key, ciphertext))
+        output_file.write(
+            "encrypt_ecb({}, {}):\nEncrypted message: {}\n".format(text.hex(), key.hex(), ciphertext.hex()))
+        print_array_bit_diff_column(text, ciphertext)
+        print(ciphertext.hex(), end="")
+    elif "decrypt_ecb".startswith(sys.argv[1]):
+        plaintext = decrypt_ecb(text, key)
+        output_file.write(
+            "decrypt_ecb({}, {}):\nDecrypted message: {}\n\n".format(text, key, plaintext))
+        output_file.write(
+            "decrypt_ecb({}, {}):\nDecrypted message: {}\n".format(text.hex(), key.hex(), plaintext.hex()))
+        print_array_bit_diff_column(text, plaintext)
+        print(plaintext.hex(), end="")
+    elif "encrypt_ctr".startswith(sys.argv[1]):
+        iv = bytes.fromhex(sys.argv[4].strip())
+        ciphertext = encrypt_ctr(text, key, iv)
+        output_file.write(
+            "encrypt_ctr({}, {}, {}):\nEncrypted message: {}\n\n".format(text, key, iv, ciphertext))
+        output_file.write(
+            "encrypt_ctr({}, {}, {}):\nEncrypted message: {}\n".format(text.hex(), key.hex(), iv.hex(), ciphertext.hex()))
+        print_array_bit_diff_column(text, ciphertext)
+        print(ciphertext.hex(), end="")
+    elif "decrypt_ctr".startswith(sys.argv[1]):
+        iv = bytes.fromhex(sys.argv[4].strip())
+        plaintext = decrypt_ctr(text, key, iv)
+        output_file.write(
+            "decrypt_ctr({}, {}, {}):\nDecrypted message: {}\n\n".format(text, key, iv, plaintext))
+        output_file.write(
+            "decrypt_ctr({}, {}, {}):\nDecrypted message: {}\n".format(text.hex(), key.hex(), iv.hex(), plaintext.hex()))
+        print_array_bit_diff_column(text, plaintext)
+        print(plaintext.hex(), end="")
+    output_file.close()
+
+# python3 kasumi.py encrypt_block <plaintext> <key>
+# python3 kasumi.py encrypt_block 41545441434b204154204441574e2101 534f4d452031323820424954204b4559
+#                              "ATTACK AT DAWN!\x01"             "SOME 128 BIT KEY"
+
+# python3 kasumi.py decrypt_block <ciphertext> <key>
+# python3 kasumi.py decrypt_block 7d354e8b1dc429a300abac87c050951a 534f4d452031323820424954204b4559
+#                                  <ciphertext>                  "SOME 128 BIT KEY"
+
+# python3 kasumi.py encrypt_ecb 41545441434b204154204441574e2101 534f4d452031323820424954204b4559
+# python3 kasumi.py decrypt_ecb 7d354e8b1dc429a300abac87c050951a3485873e087a21ed908331410fcb2fe4 534f4d452031323820424954204b4559
+
+# python3 kasumi.py encrypt_ctr 41545441434b204154204441574e2101 534f4d452031323820424954204b4559 00000000000000000000000000000000
+# python3 kasumi.py decrypt_ctr f2ff3999c8a82dd91e952d830853ca88 534f4d452031323820424954204b4559 00000000000000000000000000000000
+
+# Test Vectors:

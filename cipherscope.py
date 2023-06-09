@@ -371,7 +371,7 @@ class CipherScope(customtkinter.CTk):
 
     cipher = ""
 
-    def select_frame_by_name(self, name):
+    def select_frame_by_name(self, name: str):
         # set button color for selected button
         self.info_button.configure(
             fg_color=("gray75", "gray25") if name == "info" else "transparent")
@@ -850,7 +850,7 @@ if __name__ == "__main__":
     # customtkinter.set_default_color_theme(os.path.join(os.path.dirname(
     #     os.path.realpath(__file__)), "assets", "themes", "kou-green.json"))
 
-    customtkinter.set_widget_scaling(int(200)/100)
+    customtkinter.set_widget_scaling(int(100)/100)
     # customtkinter.set_window_scaling(int(100)/100)
 
     app = CipherScope()
