@@ -461,7 +461,7 @@ if __name__ == "__main__":
 
 # python3 itubee.py decrypt_block  <ciphertext>          <key>
 # python3 itubee.py decrypt_block  602e1e5341163fa7c988  534f4d45203830424954
-#                                  <ciphertext>          "SOME 80BIT"
+#                                      <ciphertext>          "SOME 80BIT"
 
 # python3 itubee.py encrypt_ecb 48656c6c6f576f726c64 534f4d45203830424954
 # python3 itubee.py decrypt_ecb 602e1e5341163fa7c988018f59ba0677bffbe60b 534f4d45203830424954

@@ -555,7 +555,7 @@ if __name__ == "__main__":
 
 # python3 hight.py encrypt_block <plaintext> <key>
 # python3 hight.py encrypt_block 486920576f726c64 534f4d452031323820424954204b4559
-#                                "Hi World"              "SOME 128 BIT KEY"
+#                                   "Hi World"           "SOME KEY"
 
 # python3 hight.py decrypt_block <ciphertext> <key>
 # python3 hight.py decrypt_block f0c93f321a5f394f 534f4d452031323820424954204b4559
