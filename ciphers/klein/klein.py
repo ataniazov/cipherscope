@@ -205,7 +205,7 @@ if __name__ == "__main__":
     output_file_name = "output.txt"
     output_file = open(output_file_name, "w")
 
-    output_file.write("Chaskey\n\n")
+    output_file.write("KLEIN\n\n")
 
     if "encrypt".startswith(sys.argv[1]):
         ciphertext = encrypt(text, key)

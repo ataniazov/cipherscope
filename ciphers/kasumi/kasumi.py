@@ -9,16 +9,19 @@ Bo Zhu
 
 
 def _bitlen(x):
+    output_file.write("_bitlen(x: {})\n".format(x))
     assert x >= 0
     return len(bin(x)) - 2
 
 
 def _shift(x, s):
+    output_file.write("_shift(x: {}, s: {})\n".format(x, s))
     assert _bitlen(x) <= 16
     return ((x << s) & 0xFFFF) | (x >> (16 - s))
 
 
 def _mod(x):
+    output_file.write("_mod(x: {})\n".format(x))
     return ((x - 1) % 8) + 1
 
 
@@ -83,6 +86,8 @@ class Kasumi:
     def set_key(self, master_key):
         assert _bitlen(master_key) <= 128
 
+        output_file.write("set_key(master_key: {})\n".format(master_key))
+
         key = [None] * 9
         key_prime = [None] * 9
 
@@ -103,6 +108,8 @@ class Kasumi:
 
     def fun_FI(self, input, round_key):
         # assert _bitlen(input)  <= 16
+        output_file.write(
+            "fun_FI(input: {}, round_key: {})\n".format(input, round_key))
 
         left = input >> 7
         right = input & 0b1111111
@@ -133,6 +140,8 @@ class Kasumi:
     def fun_FO(self, input, round_i):
         # assert _bitlen(input)  <= 32
         # assert round_i >= 1 and round_i <= 8
+        output_file.write(
+            "fun_FO(input: {}, round_i: {})\n".format(input, round_i))
 
         in_left = input >> 16
         in_right = input & 0xFFFF
@@ -156,6 +165,8 @@ class Kasumi:
     def fun_FL(self, input, round_i):
         # assert _bitlen(input)  <= 32
         # assert round_i >= 1 and round_i <= 8
+        output_file.write(
+            "fun_FL(input: {}, round_i: {})\n".format(input, round_i))
 
         in_left = input >> 16
         in_right = input & 0xFFFF
@@ -170,6 +181,8 @@ class Kasumi:
     def fun_f(self, input, round_i):
         # assert _bitlen(input)  <= 32
         # assert round_i >= 1 and round_i <= 8
+        output_file.write(
+            "fun_f(input: {}, round_i: {})\n".format(input, round_i))
 
         if round_i % 2 == 1:
             state = self.fun_FL(input, round_i)
@@ -185,6 +198,8 @@ class Kasumi:
         # assert _bitlen(in_left)  <= 32
         # assert _bitlen(in_right) <= 32
         # assert round_i >= 1 and round_i <= 8
+        output_file.write("enc_1r(in_left: {}, in_right: {}, round_i: {})\n".format(
+            in_left, in_right, round_i))
 
         out_right = in_left  # note this is different from normal Feistel
         out_left = in_right ^ self.fun_f(in_left, round_i)
@@ -197,6 +212,8 @@ class Kasumi:
         # assert _bitlen(in_left)  <= 32
         # assert _bitlen(in_right) <= 32
         # assert round_i >= 1 and round_i <= 8
+        output_file.write("dec_1r(in_left: {}, in_right: {}, round_i: {})\n".format(
+            in_left, in_right, round_i))
 
         out_left = in_right
         out_right = self.fun_f(in_right, round_i) ^ in_left
@@ -205,89 +222,23 @@ class Kasumi:
         # assert _bitlen(out_right) <= 32
         return out_left, out_right
 
-    def enc(self, plaintext):
+    def encrypt(self, plaintext):
         assert _bitlen(plaintext) <= 64
+        output_file.write("encrypt(plaintext: {})\n".format(plaintext))
         left = plaintext >> 32
         right = plaintext & 0xFFFFFFFF
         for i in range(1, 9):
             left, right = self.enc_1r(left, right, i)
         return (left << 32) | right
 
-    def dec(self, ciphertext):
+    def decrypt(self, ciphertext):
         assert _bitlen(ciphertext) <= 64
+        output_file.write("decrypt(ciphertext: {})\n".format(ciphertext))
         left = ciphertext >> 32
         right = ciphertext & 0xFFFFFFFF
         for i in range(8, 0, -1):
             left, right = self.dec_1r(left, right, i)
         return (left << 32) | right
-
-
-# if __name__ == '__main__':
-#     key = 0x9900aabbccddeeff1122334455667788
-#     text = 0xfedcba0987654321
-#     print("Data is "+hex(text))
-#     print("Key is "+hex(key))
-
-#     my_kasumi = Kasumi()
-#     my_kasumi.set_key(key)
-
-#     encrypted = my_kasumi.enc(text)
-#     print('encrypted', hex(encrypted))
-
-#     for i in range(99):  # for testing
-#         encrypted = my_kasumi.enc(encrypted)
-#     for i in range(99):
-#         encrypted = my_kasumi.dec(encrypted)
-
-#     decrypted = my_kasumi.dec(encrypted)
-#     print('decrypted', hex(decrypted))
-
-def xor_bytes(a, b):
-    """ Returns a new byte array with the elements xor'ed. """
-    return bytes(i ^ j for i, j in zip(a, b))
-
-
-def inc_bytes(a):
-    """ Returns a new byte array with the value increment by 1 """
-    output_file.write("inc_bytes({})\n".format(a.hex()))
-    out = list(a)
-    for i in reversed(range(len(out))):
-        if out[i] == 0xFF:
-            out[i] = 0
-        else:
-            out[i] += 1
-            break
-    return bytes(out)
-
-
-def pad(plaintext):
-    """
-    Pads the given plaintext with PKCS#7 padding to a multiple of 10 bytes.
-    Note that if the plaintext size is a multiple of 10,
-    a whole block will be added.
-    """
-    output_file.write("pad({})\n".format(plaintext.hex()))
-    padding_len = 10 - (len(plaintext) % 10)
-    padding = bytes([padding_len] * padding_len)
-    return plaintext + padding
-
-
-def unpad(plaintext):
-    """
-    Removes a PKCS#7 padding, returning the unpadded text and ensuring the
-    padding was correct.
-    """
-    output_file.write("unpad({})\n".format(plaintext.hex()))
-    padding_len = plaintext[-1]
-    assert padding_len > 0
-    message, padding = plaintext[:-padding_len], plaintext[-padding_len:]
-    assert all(p == padding_len for p in padding)
-    return message
-
-
-def split_blocks(message, block_size=10, require_padding=True):
-    assert len(message) % block_size == 0 or not require_padding
-    return [message[i:i+block_size] for i in range(0, len(message), block_size)]
 
 
 def print_msg_box(msg, indent=0, align=1, width=None, title=None):
@@ -384,46 +335,169 @@ def print_array_bit_diff_column(array_1, array_2, indent=0, column=8, hex=True):
     output_file.write("\n")
 
 
+def xor_bytes(a, b):
+    """ Returns a new byte array with the elements xor'ed. """
+    return bytes(i ^ j for i, j in zip(a, b))
+
+
+def inc_bytes(a):
+    """ Returns a new byte array with the value increment by 1 """
+    output_file.write("inc_bytes({})\n".format(a.hex()))
+    out = list(a)
+    for i in reversed(range(len(out))):
+        if out[i] == 0xFF:
+            out[i] = 0
+        else:
+            out[i] += 1
+            break
+    return bytes(out)
+
+
+def pad(plaintext):
+    """
+    Pads the given plaintext with PKCS#7 padding to a multiple of 8 bytes.
+    Note that if the plaintext size is a multiple of 8,
+    a whole block will be added.
+    """
+    output_file.write("pad({})\n".format(plaintext.hex()))
+    padding_len = 8 - (len(plaintext) % 8)
+    padding = bytes([padding_len] * padding_len)
+    return plaintext + padding
+
+
+def unpad(plaintext):
+    """
+    Removes a PKCS#7 padding, returning the unpadded text and ensuring the
+    padding was correct.
+    """
+    output_file.write("unpad({})\n".format(plaintext.hex()))
+    padding_len = plaintext[-1]
+    assert padding_len > 0
+    message, padding = plaintext[:-padding_len], plaintext[-padding_len:]
+    assert all(p == padding_len for p in padding)
+    return message
+
+
+def split_blocks(message, block_size=8, require_padding=True):
+    output_file.write("split_blocks({})\n".format(message.hex()))
+    assert len(message) % block_size == 0 or not require_padding
+    return [message[i:i+block_size] for i in range(0, len(message), block_size)]
+
+
 def encrypt_block(plaintext, key):
     output_file.write("encrypt_block({}, {})\n".format(plaintext, key))
     output_file.write("encrypt_block({}, {})\n\n".format(
         plaintext.hex(), key.hex()))
-    return ITUbee().encrypt_block(plaintext.hex(), key.hex())
+    key = int.from_bytes(key, byteorder='big', signed=False)
+    plaintext = int.from_bytes(plaintext, byteorder='big', signed=False)
+    kasumi = Kasumi()
+    kasumi.set_key(key)
+    encoded_block = kasumi.encrypt(plaintext)
+    ciphertext = encoded_block.to_bytes(
+        (encoded_block.bit_length() + 7) // 8, byteorder='big', signed=False)
+    return ciphertext
 
 
 def decrypt_block(ciphertext, key):
     output_file.write("decrypt_block({}, {})\n".format(ciphertext, key))
     output_file.write("decrypt_block({}, {})\n\n".format(
         ciphertext.hex(), key.hex()))
-    return ITUbee().decrypt_block(ciphertext.hex(), key.hex())
+    key = int.from_bytes(key, byteorder='big', signed=False)
+    ciphertext = int.from_bytes(ciphertext, byteorder='big', signed=False)
+    kasumi = Kasumi()
+    kasumi.set_key(key)
+    encoded_block = kasumi.decrypt(ciphertext)
+    plaintext = encoded_block.to_bytes(
+        (encoded_block.bit_length() + 7) // 8, byteorder='big', signed=False)
+    return plaintext
 
 
 def encrypt_ecb(plaintext, key):
+    """
+    Encrypts `plaintext` using ECB mode and PKCS#7 padding.
+    """
     output_file.write("encrypt_ecb({}, {})\n".format(plaintext, key))
     output_file.write("encrypt_ecb({}, {})\n\n".format(
         plaintext.hex(), key.hex()))
-    return ITUbee().encrypt_ecb(plaintext, key)
+
+    plaintext = pad(plaintext)
+
+    blocks = []
+    for plaintext_block in split_blocks(plaintext):
+        # ECB mode encrypt: encrypt(plaintext_block, key)
+        blocks.append(encrypt_block(plaintext_block, key))
+
+    return b''.join(blocks)
 
 
 def decrypt_ecb(ciphertext, key):
+    """
+    Decrypts `ciphertext` using ECB mode and PKCS#7 padding.
+    """
     output_file.write("decrypt_ecb({}, {})\n".format(ciphertext, key))
     output_file.write("decrypt_ecb({}, {})\n\n".format(
         ciphertext.hex(), key.hex()))
-    return ITUbee().decrypt_ecb(ciphertext, key)
+
+    blocks = []
+    for ciphertext_block in split_blocks(ciphertext):
+        # ECB mode decrypt: decrypt(ciphertext_block, key)
+        blocks.append(decrypt_block(ciphertext_block, key))
+
+    return unpad(b''.join(blocks))
 
 
 def encrypt_ctr(plaintext, key, iv):
+    """
+    Encrypts `plaintext` using CTR mode with the given nounce/IV.
+    """
     output_file.write("encrypt_ctr({}, {}, {})\n".format(plaintext, key, iv))
     output_file.write("encrypt_ctr({}, {}, {})\n\n".format(
         plaintext.hex(), key.hex(), iv.hex()))
-    return ITUbee().encrypt_ctr(plaintext, key, iv)
+
+    assert len(iv) == 8
+
+    blocks = []
+    nonce = iv
+    for plaintext_block in split_blocks(plaintext, require_padding=False):
+        # CTR mode encrypt: plaintext_block XOR encrypt(nonce)
+        encrypted_nonce = encrypt_block(nonce, key)
+        block = xor_bytes(plaintext_block, encrypted_nonce)
+
+        print_msg_box("Plaintext Block <XOR> Encrypted Nonce")
+        output_file.write("xor_bytes({}, {})\nCiphertext Block: {}\n\n".format(
+            plaintext_block.hex(), encrypted_nonce.hex(), block.hex()))
+
+        blocks.append(block)
+        nonce = inc_bytes(nonce)
+
+    return b''.join(blocks)
 
 
 def decrypt_ctr(ciphertext, key, iv):
+    """
+    Decrypts `ciphertext` using CTR mode with the given nounce/IV.
+    """
     output_file.write("decrypt_ctr({}, {}, {})\n".format(ciphertext, key, iv))
     output_file.write("decrypt_ctr({}, {}, {})\n\n".format(
         ciphertext.hex(), key.hex(), iv.hex()))
-    return ITUbee().decrypt_ctr(ciphertext, key, iv)
+
+    assert len(iv) == 8
+
+    blocks = []
+    nonce = iv
+    for ciphertext_block in split_blocks(ciphertext, require_padding=False):
+        # CTR mode decrypt: ciphertext XOR encrypt(nonce)
+        encrypted_nonce = encrypt_block(nonce, key)
+        block = xor_bytes(ciphertext_block, encrypted_nonce)
+
+        print_msg_box("Ciphertext Block <XOR> Encrypted Nonce")
+        output_file.write("xor_bytes({}, {})\nPlaintext Block: {}\n\n".format(
+            ciphertext_block.hex(), encrypted_nonce.hex(), block.hex()))
+
+        blocks.append(block)
+        nonce = inc_bytes(nonce)
+
+    return b''.join(blocks)
 
 
 if __name__ == "__main__":
@@ -496,17 +570,17 @@ if __name__ == "__main__":
     output_file.close()
 
 # python3 kasumi.py encrypt_block <plaintext> <key>
-# python3 kasumi.py encrypt_block 41545441434b204154204441574e2101 534f4d452031323820424954204b4559
-#                              "ATTACK AT DAWN!\x01"             "SOME 128 BIT KEY"
+# python3 kasumi.py encrypt_block 486920576f726c64 534f4d452031323820424954204b4559
+#                                     "HelloWorld"            "SOME 128 BIT KEY"
 
 # python3 kasumi.py decrypt_block <ciphertext> <key>
-# python3 kasumi.py decrypt_block 7d354e8b1dc429a300abac87c050951a 534f4d452031323820424954204b4559
+# python3 kasumi.py decrypt_block 1e9c0e3128f981b4 534f4d452031323820424954204b4559
 #                                  <ciphertext>                  "SOME 128 BIT KEY"
 
-# python3 kasumi.py encrypt_ecb 41545441434b204154204441574e2101 534f4d452031323820424954204b4559
-# python3 kasumi.py decrypt_ecb 7d354e8b1dc429a300abac87c050951a3485873e087a21ed908331410fcb2fe4 534f4d452031323820424954204b4559
+# python3 kasumi.py encrypt_ecb 486920576f726c64 534f4d452031323820424954204b4559
+# python3 kasumi.py decrypt_ecb 1e9c0e3128f981b44a417d1571520875 534f4d452031323820424954204b4559
 
-# python3 kasumi.py encrypt_ctr 41545441434b204154204441574e2101 534f4d452031323820424954204b4559 00000000000000000000000000000000
-# python3 kasumi.py decrypt_ctr f2ff3999c8a82dd91e952d830853ca88 534f4d452031323820424954204b4559 00000000000000000000000000000000
+# python3 kasumi.py encrypt_ctr 486920576f726c64 534f4d452031323820424954204b4559 0000000000000000
+# python3 kasumi.py decrypt_ctr b9e6e36fede58f47 534f4d452031323820424954204b4559 0000000000000000
 
 # Test Vectors:
