@@ -297,6 +297,7 @@ def multm1(t32):
 
 def f0(rk, x32):
     """F0 function"""
+    output_file.write("f0(rk: {}, x32: {})\n".format(rk, x32))
     t8 = _32To8(rk ^ x32)
     t8 = [s0[t8[0]], s1[t8[1]], s0[t8[2]], s1[t8[3]]]
     return _8To32(multm0(t8))
@@ -304,6 +305,7 @@ def f0(rk, x32):
 
 def f1(rk, x32):
     """F1 function"""
+    output_file.write("f1(rk: {}, x32: {})\n".format(rk, x32))
     t8 = _32To8(rk ^ x32)
     t8 = s1[t8[0]], s0[t8[1]], s1[t8[2]], s0[t8[3]]
     return _8To32(multm1(t8))
@@ -311,6 +313,7 @@ def f1(rk, x32):
 
 def gfn4(x32, n):
     """4-branch Generalized Feistel Network function"""
+    output_file.write("gfn4(x32: {}, n: {})\n".format(x32, n))
     t32 = x32[:]
     for i in range(0, n << 1, 2):
         t32[1] ^= f0(rk[i], t32[0])
@@ -321,6 +324,7 @@ def gfn4(x32, n):
 
 def gfn4i(x32, n):
     """4-branch Generalized Feistel Network inverse function"""
+    output_file.write("gfn4i(x32: {}, n: {})\n".format(x32, n))
     t32 = x32[:]
     for i in reversed(range(0, n << 1, 2)):
         t32[1] ^= f0(rk[i], t32[0])
@@ -331,6 +335,7 @@ def gfn4i(x32, n):
 
 def gfn8(x32, n):
     """8-branch Generalized Feistel Network function"""
+    output_file.write("gfn8(x32: {}, n: {})\n".format(x32, n))
     t32 = x32[:]
     for i in range(0, n << 2, 4):
         t32[1] ^= f0(rk[i], t32[0])
