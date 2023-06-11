@@ -461,125 +461,6 @@ def decrypt(ctext):
     return _32To128(t32)
 
 
-# if __name__ == "__main__":
-
-#     def checkTestVector(key, keySize, plaintext, ciphertext, nIter=1000):
-#         testSuccess = True
-#         setKey(key, keySize)
-#         ks = ksTable[keySize] * 8
-#         ctext = encrypt(plaintext)
-#         ptext = decrypt(ctext)
-#         try:
-#             assert ctext == ciphertext
-#         except AssertionError:
-#             print("Error in encryption")
-#             print("Resulting ciphertext: {:02x}".format(ctext))
-#             print("Expected ciphertext: {:02x}".format(ciphertext))
-#             testSuccess = False
-#         try:
-#             assert ptext == plaintext
-#         except AssertionError:
-#             print("Error in decryption:")
-#             print("Recovered plaintext: {:02x}".format(ptext))
-#             print("Expected plaintext: {:02x}".format(plaintext))
-#             testSuccess = False
-#         if not testSuccess:
-#             return False
-#         t1 = time()
-#         for i in range(nIter):
-#             setKey(key, keySize)
-#             ctext = encrypt(plaintext)
-#         t2 = time()
-#         avg_elapsed_time = (t2 - t1) * 1000 / nIter
-#         print("{:3d}-bit key test ok!".format(ksTable[keySize] * 8))
-#         print("Average elapsed time for 16-byte block ", end="")
-#         print("ECB-{0:3d} encryption: {1:0.3f}ms".format(ks, avg_elapsed_time))
-#         t3 = time()
-#         for i in range(nIter):
-#             setKey(key, keySize)
-#             ptext = decrypt(ctext)
-#         t4 = time()
-#         avg_elapsed_time = (t4 - t3) * 1000 / nIter
-#         print("{:3d}-bit key test ok!".format(ksTable[keySize] * 8))
-#         print("Average elapsed time for 16-byte block ", end="")
-#         print("ECB-{0:3d} decryption: {1:0.3f}ms".format(ks, avg_elapsed_time))
-#         return True
-
-#     # The test vectors below are described in document "The 128-bit Blockcipher
-#     # CLEFIA Algorithm Specification" rev.1, June 1, 2007, Sony Corporation.
-
-#     ptext = 0x000102030405060708090a0b0c0d0e0f
-
-#     # Test vector for 128-bit key
-#     key1 = 0xffeeddccbbaa99887766554433221100
-#     ctext1 = 0xde2bf2fd9b74aacdf1298555459494fd
-
-#     # Test vector for 192-bit key
-#     key2 = 0xffeeddccbbaa99887766554433221100f0e0d0c0b0a09080
-#     ctext2 = 0xe2482f649f028dc480dda184fde181ad
-
-#     # Test vector for 256-bit key
-#     key3 = 0xffeeddccbbaa99887766554433221100f0e0d0c0b0a090807060504030201000
-#     ctext3 = 0xa1397814289de80c10da46d1fa48b38a
-
-#     try:
-#         assert checkTestVector(key1, "SIZE_128", ptext, ctext1) and \
-#             checkTestVector(key2, "SIZE_192", ptext, ctext2) and \
-#             checkTestVector(key3, "SIZE_256", ptext, ctext3)
-#     except AssertionError:
-#         print("At least one test failed")
-#         sys.exit(1)
-#     print("All tests passed!")
-#     sys.exit()
-
-def xor_bytes(a, b):
-    """ Returns a new byte array with the elements xor'ed. """
-    return bytes(i ^ j for i, j in zip(a, b))
-
-
-def inc_bytes(a):
-    """ Returns a new byte array with the value increment by 1 """
-    output_file.write("inc_bytes({})\n".format(a.hex()))
-    out = list(a)
-    for i in reversed(range(len(out))):
-        if out[i] == 0xFF:
-            out[i] = 0
-        else:
-            out[i] += 1
-            break
-    return bytes(out)
-
-
-def pad(plaintext):
-    """
-    Pads the given plaintext with PKCS#7 padding to a multiple of 10 bytes.
-    Note that if the plaintext size is a multiple of 10,
-    a whole block will be added.
-    """
-    output_file.write("pad({})\n".format(plaintext.hex()))
-    padding_len = 10 - (len(plaintext) % 10)
-    padding = bytes([padding_len] * padding_len)
-    return plaintext + padding
-
-
-def unpad(plaintext):
-    """
-    Removes a PKCS#7 padding, returning the unpadded text and ensuring the
-    padding was correct.
-    """
-    output_file.write("unpad({})\n".format(plaintext.hex()))
-    padding_len = plaintext[-1]
-    assert padding_len > 0
-    message, padding = plaintext[:-padding_len], plaintext[-padding_len:]
-    assert all(p == padding_len for p in padding)
-    return message
-
-
-def split_blocks(message, block_size=10, require_padding=True):
-    assert len(message) % block_size == 0 or not require_padding
-    return [message[i:i+block_size] for i in range(0, len(message), block_size)]
-
-
 def print_msg_box(msg, indent=0, align=1, width=None, title=None):
     lines = msg.split("\n")
     space = " " * align
@@ -674,46 +555,167 @@ def print_array_bit_diff_column(array_1, array_2, indent=0, column=8, hex=True):
     output_file.write("\n")
 
 
+def xor_bytes(a, b):
+    """ Returns a new byte array with the elements xor'ed. """
+    return bytes(i ^ j for i, j in zip(a, b))
+
+
+def inc_bytes(a):
+    """ Returns a new byte array with the value increment by 1 """
+    output_file.write("inc_bytes({})\n".format(a.hex()))
+    out = list(a)
+    for i in reversed(range(len(out))):
+        if out[i] == 0xFF:
+            out[i] = 0
+        else:
+            out[i] += 1
+            break
+    return bytes(out)
+
+
+def pad(plaintext):
+    """
+    Pads the given plaintext with PKCS#7 padding to a multiple of 16 bytes.
+    Note that if the plaintext size is a multiple of 16,
+    a whole block will be added.
+    """
+    output_file.write("pad({})\n".format(plaintext.hex()))
+    padding_len = 16 - (len(plaintext) % 16)
+    padding = bytes([padding_len] * padding_len)
+    return plaintext + padding
+
+
+def unpad(plaintext):
+    """
+    Removes a PKCS#7 padding, returning the unpadded text and ensuring the
+    padding was correct.
+    """
+    output_file.write("unpad({})\n".format(plaintext.hex()))
+    padding_len = plaintext[-1]
+    assert padding_len > 0
+    message, padding = plaintext[:-padding_len], plaintext[-padding_len:]
+    assert all(p == padding_len for p in padding)
+    return message
+
+
+def split_blocks(message, block_size=16, require_padding=True):
+    output_file.write("split_blocks({})\n".format(message.hex()))
+    assert len(message) % block_size == 0 or not require_padding
+    return [message[i:i+block_size] for i in range(0, len(message), block_size)]
+
+
 def encrypt_block(plaintext, key):
     output_file.write("encrypt_block({}, {})\n".format(plaintext, key))
     output_file.write("encrypt_block({}, {})\n\n".format(
         plaintext.hex(), key.hex()))
-    return ITUbee().encrypt_block(plaintext.hex(), key.hex())
+    key = int.from_bytes(key, byteorder='big', signed=False)
+    plaintext = int.from_bytes(plaintext, byteorder='big', signed=False)
+    setKey(key, "SIZE_128")
+    encoded_block = encrypt(plaintext)
+    ciphertext = encoded_block.to_bytes(
+        (encoded_block.bit_length() + 7) // 8, byteorder='big', signed=False)
+    return ciphertext
 
 
 def decrypt_block(ciphertext, key):
     output_file.write("decrypt_block({}, {})\n".format(ciphertext, key))
     output_file.write("decrypt_block({}, {})\n\n".format(
         ciphertext.hex(), key.hex()))
-    return ITUbee().decrypt_block(ciphertext.hex(), key.hex())
+    key = int.from_bytes(key, byteorder='big', signed=False)
+    ciphertext = int.from_bytes(ciphertext, byteorder='big', signed=False)
+    setKey(key, "SIZE_128")
+    encoded_block = decrypt(ciphertext)
+    plaintext = encoded_block.to_bytes(
+        (encoded_block.bit_length() + 7) // 8, byteorder='big', signed=False)
+    return plaintext
 
 
 def encrypt_ecb(plaintext, key):
+    """
+    Encrypts `plaintext` using ECB mode and PKCS#7 padding.
+    """
     output_file.write("encrypt_ecb({}, {})\n".format(plaintext, key))
     output_file.write("encrypt_ecb({}, {})\n\n".format(
         plaintext.hex(), key.hex()))
-    return ITUbee().encrypt_ecb(plaintext, key)
+
+    plaintext = pad(plaintext)
+
+    blocks = []
+    for plaintext_block in split_blocks(plaintext):
+        # ECB mode encrypt: encrypt(plaintext_block, key)
+        blocks.append(encrypt_block(plaintext_block, key))
+
+    return b''.join(blocks)
 
 
 def decrypt_ecb(ciphertext, key):
+    """
+    Decrypts `ciphertext` using ECB mode and PKCS#7 padding.
+    """
     output_file.write("decrypt_ecb({}, {})\n".format(ciphertext, key))
     output_file.write("decrypt_ecb({}, {})\n\n".format(
         ciphertext.hex(), key.hex()))
-    return ITUbee().decrypt_ecb(ciphertext, key)
+
+    blocks = []
+    for ciphertext_block in split_blocks(ciphertext):
+        # ECB mode decrypt: decrypt(ciphertext_block, key)
+        blocks.append(decrypt_block(ciphertext_block, key))
+
+    return unpad(b''.join(blocks))
 
 
 def encrypt_ctr(plaintext, key, iv):
+    """
+    Encrypts `plaintext` using CTR mode with the given nounce/IV.
+    """
     output_file.write("encrypt_ctr({}, {}, {})\n".format(plaintext, key, iv))
     output_file.write("encrypt_ctr({}, {}, {})\n\n".format(
         plaintext.hex(), key.hex(), iv.hex()))
-    return ITUbee().encrypt_ctr(plaintext, key, iv)
+
+    assert len(iv) == 16
+
+    blocks = []
+    nonce = iv
+    for plaintext_block in split_blocks(plaintext, require_padding=False):
+        # CTR mode encrypt: plaintext_block XOR encrypt(nonce)
+        encrypted_nonce = encrypt_block(nonce, key)
+        block = xor_bytes(plaintext_block, encrypted_nonce)
+
+        print_msg_box("Plaintext Block <XOR> Encrypted Nonce")
+        output_file.write("xor_bytes({}, {})\nCiphertext Block: {}\n\n".format(
+            plaintext_block.hex(), encrypted_nonce.hex(), block.hex()))
+
+        blocks.append(block)
+        nonce = inc_bytes(nonce)
+
+    return b''.join(blocks)
 
 
 def decrypt_ctr(ciphertext, key, iv):
+    """
+    Decrypts `ciphertext` using CTR mode with the given nounce/IV.
+    """
     output_file.write("decrypt_ctr({}, {}, {})\n".format(ciphertext, key, iv))
     output_file.write("decrypt_ctr({}, {}, {})\n\n".format(
         ciphertext.hex(), key.hex(), iv.hex()))
-    return ITUbee().decrypt_ctr(ciphertext, key, iv)
+
+    assert len(iv) == 16
+
+    blocks = []
+    nonce = iv
+    for ciphertext_block in split_blocks(ciphertext, require_padding=False):
+        # CTR mode decrypt: ciphertext XOR encrypt(nonce)
+        encrypted_nonce = encrypt_block(nonce, key)
+        block = xor_bytes(ciphertext_block, encrypted_nonce)
+
+        print_msg_box("Ciphertext Block <XOR> Encrypted Nonce")
+        output_file.write("xor_bytes({}, {})\nPlaintext Block: {}\n\n".format(
+            ciphertext_block.hex(), encrypted_nonce.hex(), block.hex()))
+
+        blocks.append(block)
+        nonce = inc_bytes(nonce)
+
+    return b''.join(blocks)
 
 
 if __name__ == "__main__":
@@ -790,13 +792,27 @@ if __name__ == "__main__":
 #                              "ATTACK AT DAWN!\x01"             "SOME 128 BIT KEY"
 
 # python3 clefia.py decrypt_block <ciphertext> <key>
-# python3 clefia.py decrypt_block 7d354e8b1dc429a300abac87c050951a 534f4d452031323820424954204b4559
+# python3 clefia.py decrypt_block 280c196bb4a05b2fbfa12457cf612918 534f4d452031323820424954204b4559
 #                                  <ciphertext>                  "SOME 128 BIT KEY"
 
 # python3 clefia.py encrypt_ecb 41545441434b204154204441574e2101 534f4d452031323820424954204b4559
-# python3 clefia.py decrypt_ecb 7d354e8b1dc429a300abac87c050951a3485873e087a21ed908331410fcb2fe4 534f4d452031323820424954204b4559
+# python3 clefia.py decrypt_ecb 280c196bb4a05b2fbfa12457cf612918caafffc927ba18cffa4970ee992e0842 534f4d452031323820424954204b4559
 
 # python3 clefia.py encrypt_ctr 41545441434b204154204441574e2101 534f4d452031323820424954204b4559 00000000000000000000000000000000
-# python3 clefia.py decrypt_ctr f2ff3999c8a82dd91e952d830853ca88 534f4d452031323820424954204b4559 00000000000000000000000000000000
+# python3 clefia.py decrypt_ctr 01904ed6ddb079aa17e732d6f85c6bdb 534f4d452031323820424954204b4559 00000000000000000000000000000000
 
 # Test Vectors:
+# 128-bit key:
+# key:        ffeeddcc bbaa9988 77665544 33221100
+# plaintext:  00010203 04050607 08090a0b 0c0d0e0f
+# ciphertext: de2bf2fd 9b74aacd f1298555 459494fd
+
+# 192-bit key:
+# key:        ffeeddcc bbaa9988 77665544 33221100 f0e0d0c0 b0a09080
+# plaintext:  00010203 04050607 08090a0b 0c0d0e0f
+# ciphertext: e2482f64 9f028dc4 80dda184 fde181ad
+
+# 256-bit key:
+# key:        ffeeddcc bbaa9988 77665544 33221100 f0e0d0c0 b0a09080 70605040 30201000
+# plaintext:  00010203 04050607 08090a0b 0c0d0e0f
+# ciphertext: a1397814 289de80c 10da46d1 fa48b38a
